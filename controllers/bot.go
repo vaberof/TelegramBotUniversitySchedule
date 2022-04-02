@@ -7,7 +7,7 @@ import (
 )
 
 func BotInit() {
-	bot, err := tgbotapi.NewBotAPI("5265008768:AAFtIigspy2jszjdlAVyp2k0DQC1LhyOFAw") // Убрать токен когда буду пушить на гитхаб
+	bot, err := tgbotapi.NewBotAPI("") // Убрать токен когда буду пушить на гитхаб
 	if err != nil {
 		log.Panic(err)
 	}
