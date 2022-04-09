@@ -7,12 +7,10 @@ import (
 )
 
 func BotInit() {
-	bot, err := tgbotapi.NewBotAPI("5265008768:AAFtIigspy2jszjdlAVyp2k0DQC1LhyOFAw") // Убрать токен когда буду пушить на гитхаб
+	bot, err := tgbotapi.NewBotAPI("5265008768:AAH8cVWRC5LkYoDVKUV2QYhPxZw2d4aSNYw")
 	if err != nil {
 		log.Panic(err)
 	}
-
-	//bot.Debug = true
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
@@ -31,30 +29,19 @@ func BotInit() {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
 			userMessage := update.Message.Text
 
+
+			group := models.GroupInit()
 			// Проверяем, существует ли группа в словаре
-			if models.GroupExists(userMessage) {
+			if group.GroupExists(userMessage) {
 				//curGroup = userMessage
 				//saved = true
 				// Если сущесвует, то вызываем ф-ию расписания на "Сегодня"
-				DoRequest(models.Groups[userMessage])
-				TodayShedule(models.Groups[userMessage])
-				msg.Text = "[Группа]: " + userMessage + "\n\n"
-				// Проходимся по массиву из ф-ии и выводим в тг
-				for _, text := range ResponseMassive {
-					msg.Text += text
-				}
-				// Проверяем, если длина массива 0 -> значит пар нет, выводим сообщение
-				if len(ResponseMassive) == 0 {
-					msg.Text = "Пар нет"
-					bot.Send(msg)
-					// Если массив непустой -> пары есть,
-					// выводим расписание
-					// обнуляем массив и счетчик для вывода даты
-				} else {
-					bot.Send(msg)
-					ResponseMassive = []string{}
-					DateCount = 0
-				}
+				makeRequest(group.GetGroup(userMessage))
+				msg.Text = "Группа" + "            " + userMessage + "\n"
+				//msg.Text = ""
+				msg.Text += getTodaySchedule(group.GetGroup(userMessage))
+				bot.Send(msg)
+
 				// Если группы не существует -> выводим соответствующее сообщение
 			} else {
 				log.Printf("[ERROR] Группа %s не добавлена\n", userMessage)

@@ -6,48 +6,52 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // Делаем запрос
-func DoRequest(url string) *http.Response {
-	// Делаем запрос
+func makeRequest(url string) *http.Response {
+
 	res, err := http.Get(url)
 	if err != nil {
 		log.Println(err)
 	}
 
+	//defer res.Body.Close()
+
 	if res.StatusCode != 200 {
 		fmt.Println("status code error: %d %s", res.StatusCode, res.Status)
 	}
-	return res
+	body := res
+
+	return body
 }
 
-// "Сегодня" конвертируем сегодняшнюю верхнюю дату сайта в нужный формат с точкой "29.03" и "29.03.2022"
-func todayDateConvert(date string) []string {
+// Загружаем HTML страничку
+func loadHtmlPage(url string) *goquery.Document{
+
+	doc, err := goquery.NewDocumentFromReader(makeRequest(url).Body)
+
+	if err != nil {
+		log.Println(err)
+	}
+	return doc
+}
+
+// Получаем сегодняшнюю дату
+func getTodayDate() []string {
 
 	var shortTodayDate string
 	var fullTodayDate string
 
-	for i := 0; i <= 5; i++{
+	novosibirsk, _ := time.LoadLocation("Asia/Novosibirsk")
 
-		if i == 2 {
-			shortTodayDate += "."
-			fullTodayDate += "."
-		}
+	shortTodayDate = time.Now().In(novosibirsk).Format("02.01")
+	fullTodayDate = time.Now().In(novosibirsk).Format("02.01.2006")
 
-		if i == 4 {
-			fullTodayDate += "." + "20"
-		}
+	//shortTodayDate = "08.04"
+	//fullTodayDate = "08.04.2022"
 
-		if i < 4 {
-			c := fmt.Sprintf("%c", date[i])
-			shortTodayDate += c
-		}
-
-		c := fmt.Sprintf("%c", date[i])
-		fullTodayDate += c
-	}
-	shortTodayDate = "01.04"
 	return []string{shortTodayDate, fullTodayDate}
 }
 
@@ -76,79 +80,87 @@ func lessonNum (startTime string) string {
 	return numLesson
 }
 
-// Переменные, которые используются в файлах parser.go и bot.go
-var (
-	DateCount int
-	ResponseMassive []string
-)
+// Находим блок, с сегодняшней датой
+func findTodayDateTag(url string) *goquery.Selection {
 
-// Получаем расписание на сегодняшний день
-func TodayShedule(url string)  {
+	doc := loadHtmlPage(url)
 
-	var (
-		startTime   string  // Начало пары
-		finishTime  string  // Конец пары
-		nameLesson  string  // Название предмета
-		kabinetNum  string  // Номер аудитории
-		nameTeacher string  // Имя преподавателя
-		typeLesson  string  // Тип пары (лекция/практика/лабораторная)
-	)
+	var selection *goquery.Selection
 
-	// Загружаем HTML страничку
-	doc, err := goquery.NewDocumentFromReader(DoRequest(url).Body)
-	if err != nil {
-		log.Println(err)
-	}
-
-	defer DoRequest(url).Body.Close()
-	if err != nil {
-		log.Println(err)
-	}
-
-	// Ищем сегодняшнюю дату вверху сайта
-	var date string
-
-	doc.Find(".date_and_time").Each(func(index int, item *goquery.Selection) {
-		// For each item found, get the title
-		span := item.Find("span")
-		today := span.Text()
-		date = today
-	})
-
-	// Ищем расписание на сегодняшний день
-	doc.Find("div.one_day-wrap").EachWithBreak(func(index int, item *goquery.Selection) bool{
+	doc.Find("div.one_day-wrap").EachWithBreak(func(index int, item *goquery.Selection) bool {
 		// Ищем совпадение с сегодняшней датой
 		everDTag := item.Find("div.everD")
-		value := strings.ReplaceAll(everDTag.Text(), " ", "") // убираем пробелы в дате
+		everDTagValue := strings.ReplaceAll(everDTag.Text(), " ", "") // убираем пробелы в дате
 		// Если нашлась текущая дата
-		if value == todayDateConvert(date)[0]{
-			// Ищем расписание на сегодня
-			item.Find(".one_lesson").EachWithBreak(func(index int, item *goquery.Selection) bool {
-				nameLesson = item.Find(".names_of_less").Text()
-				if nameLesson != "" {
-					startTime = item.Find(".starting_less").Text()
-					finishTime = item.Find(".finished_less").Text()
-					kabinetNum = item.Find(".kabinet_of_less").Text()
-					nameTeacher = item.Find(".name_of_teacher").Text()
-					typeLesson = item.Find(".type_less").Text()
+		if everDTagValue == getTodayDate()[0] {
+			selection = item
+			return false
+		}
+		return true
+})
+	return selection
+}
 
-					// Добавление сегодняшней даты
-					if DateCount == 0 {
-						ResponseMassive = append(ResponseMassive, "[Дата]: " + todayDateConvert(date)[1] + " (Сегодня)" + "\n" )
-						DateCount += 1
-					}
-					// Добавляем в массив пары для вывода в файл bot.go
-					ResponseMassive = append(ResponseMassive,
-						"\n"+ "[Пара номер]: " + lessonNum(startTime) + "\n",
-						"[Начало пары]: " + startTime + "-" + finishTime + "\n",
-						"[Предмет]: " + nameLesson + "\n",
-						"[Аудитория]: " + kabinetNum + "\n",
-						"[Преподаватель]: " + nameTeacher + "\n",
-						"[Тип]: " + typeLesson + "\n")
-				}
-				return true
-			})
+// Проверяем, существует ли тег на сайте
+func isNilTag(item *goquery.Selection) bool {
+
+	if item == nil {
+		log.Printf("Ошибка, тег %v не найден", item)
+		return true
+	}
+	return false
+}
+
+// Ищем расписание на сегодняшний день
+func findTodaySchedule(url string) string {
+
+	var (
+		startTime     string  // Начало пары
+		finishTime    string  // Конец пары
+		lessonName    string  // Название предмета
+		roomNumber    string  // Номер аудитории
+		teacherName   string  // Имя преподавателя
+		lessonType    string  // Тип пары (лекция/практика/лабораторная)
+		messageToUser string  // Сообщение пользователю
+	)
+
+	schedule := scheduleInit()
+	item := findTodayDateTag(url)
+
+	// Проверяем, существует ли тег на странице
+	if isNilTag(item) {
+		messageToUser = "сегодня/завтра 'воскресенье' - пар нет"
+		return messageToUser
+	}
+
+	// Ищем все пары на сегодняшний день
+	item.Find(".one_lesson").EachWithBreak(func(index int, item *goquery.Selection) bool {
+		lessonName = item.Find(".names_of_less").Text()
+		if lessonName != "" {
+			startTime = item.Find(".starting_less").Text()
+			finishTime = item.Find(".finished_less").Text()
+			roomNumber = item.Find(".kabinet_of_less").Text()
+			teacherName = item.Find(".name_of_teacher").Text()
+			lessonType = item.Find(".type_less").Text()
+
+			// Добавляем в массив, при этом убирая отступы в начале строки
+			schedule.appendLessonsToArray(
+				startTime,
+				finishTime,
+				lessonName,
+				roomNumber,
+				teacherName,
+				lessonType)
 		}
 		return true
 	})
+
+	messageToUser = schedule.getScheduleFromArray()
+
+	return messageToUser
+}
+
+// Получаем расписание на сегодняшний день
+func getTodaySchedule(url string) string {
+	return findTodaySchedule(url)
 }
