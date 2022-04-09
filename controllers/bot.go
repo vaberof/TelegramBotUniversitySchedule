@@ -7,7 +7,7 @@ import (
 )
 
 func BotInit() {
-	bot, err := tgbotapi.NewBotAPI("")
+	bot, err := tgbotapi.NewBotAPI("5265008768:AAEzgBLix7az6Otw4CAzbz1MNkBn52_M80A")
 
 	if err != nil {
 		log.Panic(err)
@@ -30,14 +30,12 @@ func BotInit() {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
 			userMessage := update.Message.Text
 
-
 			group := models.GroupInit()
 			// Проверяем, существует ли группа в словаре
 			if group.GroupExists(userMessage) {
 				//curGroup = userMessage
 				//saved = true
 				// Если сущесвует, то вызываем ф-ию расписания на "Сегодня"
-				makeRequest(group.GetGroup(userMessage))
 				msg.Text = "Группа" + "            " + userMessage + "\n"
 				//msg.Text = ""
 				msg.Text += getTodaySchedule(group.GetGroup(userMessage))
