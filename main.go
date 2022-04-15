@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	controllers.BotInit()
+	controllers.StartBot()
 }
