@@ -1,4 +1,4 @@
-package services
+package model
 
 type Schedule struct {
 	schedule []string

@@ -1,9 +1,9 @@
-package controllers
+package controller
 
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/tg_bot_timetable/services"
+	"github.com/tg_bot_timetable/model"
 	"log"
 )
 
@@ -22,10 +22,10 @@ func CreateBot(token string) *tgbotapi.BotAPI{
 }
 
 // Получаем сообщение от пользователя
-func handleMessage(userText string) *string {
+func HandleMessage(userText string) *string {
 	var response string
 
-	groups := services.CreateGroupStorage()
+	groups := model.CreateGroupStorage()
 	studyGroupId := userText
 	studyGroupUrl := groups.GetGroupUrl(studyGroupId)
 
@@ -37,13 +37,14 @@ func handleMessage(userText string) *string {
 		return &response
 	}
 
-	schedule := getTodaySchedule(studyGroupUrl)
-	response = schedule
+	schedule := model.GetTodaySchedule(studyGroupUrl)
+	response = *schedule
 
 	return &response
 }
 
 // Запускаем бота
+
 func StartBot() {
 	bot := CreateBot(TOKEN)
 
@@ -61,7 +62,7 @@ func StartBot() {
 		responseMessage := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
 
 		inputText := update.Message.Text
-		responseText := handleMessage(inputText)
+		responseText := HandleMessage(inputText)
 		responseMessage.Text = *responseText
 		bot.Send(responseMessage)
 	}

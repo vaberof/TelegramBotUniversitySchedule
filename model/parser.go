@@ -1,9 +1,8 @@
-package controllers
+package model
 
 import (
 	"github.com/PuerkitoBio/goquery"
-	"github.com/tg_bot_timetable/handlers"
-	"github.com/tg_bot_timetable/services"
+	"github.com/tg_bot_timetable/handler"
 	"log"
 	"strings"
 )
@@ -13,14 +12,14 @@ func parseDate(url string) *goquery.Selection {
 
 	var dateSelection *goquery.Selection
 
-	document := handlers.LoadHtmlPage(url)
+	document := handler.LoadHtmlPage(url)
 
 	document.Find("div.one_day-wrap").EachWithBreak(func(index int, tag *goquery.Selection) bool {
 		// Ищем совпадение с сегодняшней датой
 		everDTag := tag.Find("div.everD")
 		everDTagValue := strings.ReplaceAll(everDTag.Text(), " ", "")
 		// Если нашлась текущая дата
-		if everDTagValue == services.GetTodayDate()[0] {
+		if everDTagValue == GetTodayDate()[0] {
 			dateSelection = tag
 			return false
 		}
@@ -29,18 +28,8 @@ func parseDate(url string) *goquery.Selection {
 	return dateSelection
 }
 
-// Проверяем, существует ли тег на сайте
-func isNilSelection(selection *goquery.Selection) bool {
-
-	if selection == nil {
-		log.Printf("Ошибка, тег %v не найден", selection)
-		return true
-	}
-	return false
-}
-
 // Ищем расписание на сегодняшний день
-func parseLessons(url string) string {
+func parseLessons(url string) *string {
 
 	var (
 		startTime       string // Начало пары
@@ -52,13 +41,13 @@ func parseLessons(url string) string {
 		responseMessage string // Сообщение пользователю
 	)
 
-	schedule := services.CreateSchedule()
+	schedule := CreateSchedule()
 	dateSelection := parseDate(url)
 
 	// Проверяем, существует ли тег на странице
 	if isNilSelection(dateSelection) {
 		responseMessage = "Воскресенье - пар нет"
-		return responseMessage
+		return &responseMessage
 	}
 
 	// Ищем все пары на сегодняшний день
@@ -85,10 +74,20 @@ func parseLessons(url string) string {
 
 	responseMessage = schedule.GetSchedule()
 
-	return responseMessage
+	return &responseMessage
 }
 
 // Получаем расписание на сегодняшний день
-func getTodaySchedule(url string) string {
+func GetTodaySchedule(url string) *string {
 	return parseLessons(url)
+}
+
+// Проверяем, существует ли тег на сайте
+func isNilSelection(selection *goquery.Selection) bool {
+
+	if selection == nil {
+		log.Printf("Ошибка, тег %v не найден", selection)
+		return true
+	}
+	return false
 }

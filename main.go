@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/tg_bot_timetable/controllers"
+	"github.com/tg_bot_timetable/controller"
 )
 
+
 func main() {
-	controllers.StartBot()
+	controller.StartBot()
 }
