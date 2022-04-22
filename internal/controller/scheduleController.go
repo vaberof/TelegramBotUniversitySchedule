@@ -13,7 +13,6 @@ import (
 // If user`s input group not exists,
 // returns a corresponding message.
 func HandleMessage(studyGroupStorage *model.GroupStorage, location *time.Location, date, userText string) *string {
-
 	var response string
 
 	studyGroupId := userText

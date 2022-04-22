@@ -11,6 +11,7 @@ import (
 
 // NewBot creates bot.
 func NewBot() *tgbotapi.BotAPI{
+
 	config := loadConfig()
 
 	bot, err := tgbotapi.NewBotAPI(config.Token)
@@ -25,6 +26,7 @@ func NewBot() *tgbotapi.BotAPI{
 
 // loadConfig loads config from .yaml file.
 func loadConfig() *Config {
+
 	config := NewConfig()
 	yamlFile, err := ioutil.ReadFile("../../configs/app.yaml")
 	if err != nil{

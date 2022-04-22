@@ -1,17 +1,17 @@
 package model
 
 import (
-	"github.com/tg_bot_timetable/internal/handler"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/tg_bot_timetable/internal/handler"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
 // parseDate finds html selection with needed date.
 func parseDate(date, url string, location *time.Location) *goquery.Selection {
-
 	var dateSelection *goquery.Selection
 
 	document := handler.LoadHtmlPage(url)
@@ -81,7 +81,7 @@ func ParseLessons(groupId, date, url string, location *time.Location) *Schedule 
 	return schedule
 }
 
-// isNilSelection checks if html tag exists.
+// isNilSelection checks if html selection exists.
 func isNilSelection(selection *goquery.Selection) bool {
 	if selection == nil {
 		log.Printf("tag not found: %v ", selection)
