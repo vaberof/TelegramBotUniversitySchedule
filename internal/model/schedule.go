@@ -6,7 +6,6 @@ type Schedule struct {
 	Schedule []string
 }
 
-// NewSchedule returns pointer to Schedule structure.
 func NewSchedule() *Schedule {
 	return &Schedule{}
 }

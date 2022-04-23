@@ -37,7 +37,7 @@ func Start() {
 			responseCallback := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data)
 			inputCallback := responseCallback.Text
 			responseCallback.ReplyMarkup = inlineKeyboard
-			responseCallback.Text = *controller.HandleMessage(groupStorage, location, inputCallback, responseMessage.Text)
+			responseCallback.Text = *controller.HandleMessage(groupStorage, inputCallback, responseMessage.Text, location)
 			bot.Send(responseCallback)
 			continue
 		}

@@ -6,12 +6,12 @@ import (
 	"github.com/tg_bot_timetable/internal/model"
 )
 
-// GetSchedule returns schedule with all lessons.
+// GetSchedule returns model.Schedule.
 func GetSchedule(groupId, date, url string, location *time.Location) model.Schedule {
 	return *model.ParseLessons(groupId, date, url, location)
 }
 
-// ScheduleToString converts schedule to string.
+// ScheduleToString converts model.Schedule to string.
 func ScheduleToString(schedule *model.Schedule) string {
 	var scheduleString string
 

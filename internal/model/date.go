@@ -10,12 +10,11 @@ type Date struct {
 	fullDate  string
 }
 
-// NewDate returns pointer to Date structure.
 func NewDate() *Date {
 	return &Date{}
 }
 
-// getDate returns needed date.
+// getDate returns date depending on the user`s choice.
 func getDate(date string, location *time.Location) *Date {
 	d := NewDate()
 

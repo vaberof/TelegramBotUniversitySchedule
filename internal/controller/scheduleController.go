@@ -12,7 +12,7 @@ import (
 // returns schedule for user.
 // If user`s input group not exists,
 // returns a corresponding message.
-func HandleMessage(studyGroupStorage *model.GroupStorage, location *time.Location, date, userText string) *string {
+func HandleMessage(studyGroupStorage *model.GroupStorage, date, userText string, location *time.Location) *string {
 	var response string
 
 	studyGroupId := userText

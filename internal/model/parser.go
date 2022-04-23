@@ -10,7 +10,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-// parseDate finds html selection with needed date.
+// parseDate finds html selection with date that user chosen.
 func parseDate(date, url string, location *time.Location) *goquery.Selection {
 	var dateSelection *goquery.Selection
 
@@ -29,8 +29,9 @@ func parseDate(date, url string, location *time.Location) *goquery.Selection {
 	return dateSelection
 }
 
-// ParseLessons finds group`s lessons for needed date
-// and returns pointer to Schedule.
+// ParseLessons finds study group`s lessons for date that user chosen,
+// transforms Schedule using methods
+// and returns pointer to it.
 func ParseLessons(groupId, date, url string, location *time.Location) *Schedule {
 
 	var (

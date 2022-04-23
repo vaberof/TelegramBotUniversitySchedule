@@ -11,7 +11,6 @@ import (
 
 // NewBot creates bot.
 func NewBot() *tgbotapi.BotAPI{
-
 	config := loadConfig()
 
 	bot, err := tgbotapi.NewBotAPI(config.Token)

@@ -4,7 +4,6 @@ type GroupStorage struct {
 	groupStorage map[string]string
 }
 
-// NewGroupStorage returns pointer to GroupStorage.
 func NewGroupStorage() *GroupStorage {
 	return &GroupStorage{
 		groupStorage: map[string]string{
@@ -16,7 +15,8 @@ func NewGroupStorage() *GroupStorage {
 	}
 }
 
-// GroupUrl gets study group`s url.
+// GroupUrl gets study group`s url
+// and check if user`s input study group exists.
 func (g *GroupStorage) GroupUrl(studyGroupId string) (*string, bool) {
 	url, exists :=  g.groupStorage[studyGroupId]
 	return &url, exists
