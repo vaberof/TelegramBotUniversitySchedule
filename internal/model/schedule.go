@@ -20,7 +20,7 @@ func (s *Schedule) AddLessons(startTime, finishTime, lessonName, roomNumber, tea
 		"Препод."+ "          " + teacherName + "\n")
 }
 
-// AddGroupId adds group id to schedule.
+// AddGroupId adds study group id to schedule.
 func (s *Schedule) AddGroupId(groupId string) {
 	s.Schedule = append([]string{"Группа" + "            " + groupId + "\n"}, s.Schedule...)
 }
@@ -31,18 +31,14 @@ func (s *Schedule) AddDate(date string, location *time.Location) {
 }
 
 // NoLessons adds "Пар нет" to schedule
-// if no lessons on a certain day in non-nil selection.
-func (s *Schedule) NoLessons(groupId, date string,  location *time.Location) {
-	s.AddDate(date, location)
-	s.AddGroupId(groupId)
+// if no lessons on a certain day in non-nil selection while parsing.
+func (s *Schedule) NoLessons() {
 	s.Schedule = append(s.Schedule,"\n" + "Пар нет")
 }
 
 // NotFound adds "Расписание не найдено"
 // if we catch in nil selection while parsing.
-func (s *Schedule) NotFound(groupId, date string,  location *time.Location) {
-	s.AddDate(date, location)
-	s.AddGroupId(groupId)
+func (s *Schedule) NotFound() {
 	s.Schedule = append(s.Schedule,"\n" + "Расписание не найдено")
 }
 

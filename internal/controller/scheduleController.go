@@ -16,7 +16,7 @@ func HandleMessage(studyGroupStorage *model.GroupStorage, date, userText string,
 	var response string
 
 	studyGroupId := userText
-	studyGroupUrl, exists := studyGroupStorage.GroupUrl(studyGroupId)
+	studyGroupUrl, exists := studyGroupStorage.StudyGroup(studyGroupId)
 	if !exists {
 		response = fmt.Sprintf("Группа '%s' не существует", studyGroupId)
 		return &response

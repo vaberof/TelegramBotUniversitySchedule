@@ -47,7 +47,10 @@ func ParseLessons(groupId, date, url string, location *time.Location) *Schedule 
 	schedule := NewSchedule()
 
 	if isNilSelection(dateSelection) {
-		schedule.NotFound(groupId, date, location)
+		schedule.NotFound()
+		schedule.AddDate(date, location)
+		schedule.AddGroupId(groupId)
+
 		return schedule
 	}
 
@@ -72,7 +75,10 @@ func ParseLessons(groupId, date, url string, location *time.Location) *Schedule 
 	})
 
 	if !schedule.ScheduleExists() {
-		schedule.NoLessons(groupId, date, location)
+		schedule.AddDate(date, location)
+		schedule.AddGroupId(groupId)
+		schedule.NoLessons()
+
 		return schedule
 	}
 

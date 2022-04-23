@@ -33,6 +33,7 @@ func getDate(date string, location *time.Location) *Date {
 // todayDate returns today`s date.
 func (d *Date) todayDate(location *time.Location) {
 	todayDate := time.Now().In(location)
+
 	d.shortDate = todayDate.Format("02.01")
 	d.fullDate = todayDate.Format("02.01.2006")
 }
@@ -40,6 +41,7 @@ func (d *Date) todayDate(location *time.Location) {
 // tomorrowDate returns tomorrow`s date.
 func (d *Date) tomorrowDate(location *time.Location) {
 	tomorrowDate := time.Now().Add(time.Hour * 24).In(location)
+
 	d.shortDate = tomorrowDate.Format("02.01")
 	d.fullDate = tomorrowDate.Format("02.01.2006")
 }
