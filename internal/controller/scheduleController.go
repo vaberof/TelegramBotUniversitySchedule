@@ -12,10 +12,10 @@ import (
 // returns schedule for user.
 // If user`s input group not exists,
 // returns a corresponding message.
-func HandleMessage(studyGroupStorage *model.GroupStorage, date, userText string, location *time.Location) *string {
+func HandleMessage(userChatID int64, date string, user *model.User, studyGroupStorage *model.GroupStorage, location *time.Location) *string {
 	var response string
 
-	studyGroupId := userText
+	studyGroupId := user.Data[userChatID]
 	studyGroupUrl, exists := studyGroupStorage.StudyGroup(studyGroupId)
 	if !exists {
 		response = fmt.Sprintf("Группа '%s' не существует", studyGroupId)

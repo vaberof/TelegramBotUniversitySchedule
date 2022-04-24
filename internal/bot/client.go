@@ -18,6 +18,8 @@ func Start() {
 			),
 		)
 		responseMessage tgbotapi.MessageConfig
+		inputText string
+		chatID int64
 	)
 
 	bot := NewBot()
@@ -27,17 +29,23 @@ func Start() {
 
 	updates := bot.GetUpdatesChan(channel)
 
-	location := model.SetLocation()
+	user := model.NewUser()
 	groupStorage := model.NewGroupStorage()
+	location := model.SetLocation()
 
 	for update := range updates {
 
 		if update.CallbackQuery != nil {
 
 			responseCallback := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data)
-			inputCallback := responseCallback.Text
+
+			inputCallback := responseCallback.Text                      // text of the button that user pressed
+			callbackChatID := update.CallbackQuery.Message.Chat.ID      // chat id where user pressed the button
+
 			responseCallback.ReplyMarkup = inlineKeyboard
-			responseCallback.Text = *controller.HandleMessage(groupStorage, inputCallback, responseMessage.Text, location)
+
+			responseCallback.Text = *controller.HandleMessage(callbackChatID, inputCallback, user, groupStorage, location)
+
 			bot.Send(responseCallback)
 			continue
 		}
@@ -47,6 +55,12 @@ func Start() {
 		}
 
 		responseMessage = tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
+
+		inputText = responseMessage.Text    // user input
+		chatID = responseMessage.ChatID     // user chat id
+
+		user.AddUser(chatID, inputText)
+
 		responseMessage.ReplyMarkup = inlineKeyboard
 		bot.Send(responseMessage)
 	}

@@ -17,7 +17,7 @@ func NewGroupStorage() *GroupStorage {
 
 // StudyGroup gets study group`s url
 // and check if study group exists.
-func (g *GroupStorage) StudyGroup(studyGroupId string) (*string, bool) {
-	url, exists :=  g.groupStorage[studyGroupId]
+func (g *GroupStorage) StudyGroup(studyGroupID string) (*string, bool) {
+	url, exists :=  g.groupStorage[studyGroupID]
 	return &url, exists
 }

@@ -31,7 +31,7 @@ func getDate(date string, location *time.Location) *Date {
 	}
 }
 
-// today returns today`s date and weekday.
+// today gets today`s date and weekday.
 func (d *Date) today(location *time.Location) {
 	todayDate := time.Now().In(location)
 	day := todayDate.Weekday()
@@ -41,7 +41,7 @@ func (d *Date) today(location *time.Location) {
 	d.day = dayTranslate(day.String())
 }
 
-// tomorrow returns tomorrow`s date and weekday.
+// tomorrow gets tomorrow`s date and weekday.
 func (d *Date) tomorrow(location *time.Location) {
 	tomorrowDate := time.Now().Add(time.Hour * 24).In(location)
 	day := tomorrowDate.Weekday()
