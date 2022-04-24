@@ -13,33 +13,35 @@ func NewSchedule() *Schedule {
 // AddLessons adds lessons to schedule.
 func (s *Schedule) AddLessons(startTime, finishTime, lessonName, roomNumber, teacherName, lessonType string) {
 	s.Schedule = append(s.Schedule,
-		"\n"+ "Пара" + "                № "+ *getLessonNumber(startTime) + "\n",
-		"Предмет"+ "         " + lessonName + " (" + lessonType + ")" + "\n",
-		"Время"+ "             " + startTime + "-" + finishTime + "\n",
-		"Аудитория"+ "     " + roomNumber + "\n",
-		"Препод."+ "          " + teacherName + "\n")
+		"Пара " + *getLessonNumber(startTime) + ". " +
+		lessonName + " (" +
+		startTime + "-" + finishTime +
+		", " + lessonType  + ", " +
+		"ауд. " + roomNumber + ", " +
+		"препод. " + teacherName + ")"  + "\n\n")
 }
 
 // AddGroupId adds study group id to schedule.
 func (s *Schedule) AddGroupId(groupId string) {
-	s.Schedule = append([]string{"Группа" + "            " + groupId + "\n"}, s.Schedule...)
+	s.Schedule = append([]string{groupId + "\n"}, s.Schedule...)
 }
 
 // AddDate adds needed date to schedule.
 func (s *Schedule) AddDate(date string, location *time.Location) {
-	s.Schedule = append([]string{"Дата" + "                 " + getDate(date, location).fullDate + "\n"}, s.Schedule...)
+	d := getDate(date, location)
+	s.Schedule = append([]string{d.fullDate + " (" + d.day + ")" + "\n\n"}, s.Schedule...)
 }
 
 // NoLessons adds "Пар нет" to schedule
 // if no lessons on a certain day in non-nil selection while parsing.
 func (s *Schedule) NoLessons() {
-	s.Schedule = append(s.Schedule,"\n" + "Пар нет")
+	s.Schedule = append(s.Schedule,"Пар нет")
 }
 
 // NotFound adds "Расписание не найдено"
 // if we catch in nil selection while parsing.
 func (s *Schedule) NotFound() {
-	s.Schedule = append(s.Schedule,"\n" + "Расписание не найдено")
+	s.Schedule = append(s.Schedule,"Расписание не найдено")
 }
 
 // ScheduleExists returns true

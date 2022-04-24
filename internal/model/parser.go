@@ -68,7 +68,7 @@ func ParseLessons(groupId, date, url string, location *time.Location) *Schedule 
 				finishTime,
 				lessonName,
 				roomNumber,
-				teacherName,
+				strings.TrimSpace(teacherName),
 				lessonType)
 		}
 		return true
