@@ -11,7 +11,8 @@ import (
 )
 
 // makeRequest
-// returns response body of type Reader.
+// returns response body of type Reader
+// to use it in LoadHtmlPage.
 func makeRequest(url string) io.Reader {
 
 	res, err := http.Get(url)

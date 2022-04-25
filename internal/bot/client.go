@@ -1,8 +1,8 @@
 package bot
 
 import (
-	"github.com/tg_bot_timetable/internal/controller"
-	"github.com/tg_bot_timetable/internal/model"
+	"github.com/TelegramBotUniversitySchedule/internal/controller"
+	"github.com/TelegramBotUniversitySchedule/internal/model"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -17,9 +17,6 @@ func Start() {
 				tgbotapi.NewInlineKeyboardButtonData("Завтра", "Завтра"),
 			),
 		)
-		responseMessage tgbotapi.MessageConfig
-		inputText string
-		chatID int64
 	)
 
 	bot := NewBot()
@@ -39,8 +36,8 @@ func Start() {
 
 			responseCallback := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data)
 
-			inputCallback := responseCallback.Text                      // text of the button that user pressed
-			callbackChatID := update.CallbackQuery.Message.Chat.ID      // chat id where user pressed the button
+			inputCallback := responseCallback.Text
+			callbackChatID := update.CallbackQuery.Message.Chat.ID
 
 			responseCallback.ReplyMarkup = inlineKeyboard
 
@@ -54,12 +51,12 @@ func Start() {
 			continue
 		}
 
-		responseMessage = tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
+		responseMessage := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
 
-		inputText = responseMessage.Text    // user input
-		chatID = responseMessage.ChatID     // user chat id
+		inputText := responseMessage.Text
+		chatID := responseMessage.ChatID
 
-		user.AddUser(chatID, inputText)
+		user.AddData(chatID, inputText)
 
 		responseMessage.ReplyMarkup = inlineKeyboard
 		bot.Send(responseMessage)

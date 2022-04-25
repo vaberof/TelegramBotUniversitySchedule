@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/tg_bot_timetable/internal/bot"
+	"github.com/TelegramBotUniversitySchedule/internal/bot"
 )
 
 func main() {

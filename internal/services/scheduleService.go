@@ -3,7 +3,7 @@ package services
 import (
 	"time"
 
-	"github.com/tg_bot_timetable/internal/model"
+	"github.com/TelegramBotUniversitySchedule/internal/model"
 )
 
 // GetSchedule returns model.Schedule.

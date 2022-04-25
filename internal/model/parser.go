@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tg_bot_timetable/internal/handler"
+	"github.com/TelegramBotUniversitySchedule/internal/handler"
 
 	"github.com/PuerkitoBio/goquery"
 )

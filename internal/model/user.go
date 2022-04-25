@@ -10,8 +10,8 @@ func NewUser() *User {
 	}
 }
 
-// AddUser adds new user to User with unique chat id
-// and sets user input group id
-func (u *User) AddUser(userChatID int64, groupID string) {
+// AddData adds user`s unique chat id
+// and his input group id to User.
+func (u *User) AddData(userChatID int64, groupID string) {
 	u.Data[userChatID] = groupID
 }

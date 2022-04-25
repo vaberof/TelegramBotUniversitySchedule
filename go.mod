@@ -1,4 +1,4 @@
-module github.com/tg_bot_timetable
+module github.com/TelegramBotUniversitySchedule
 
 go 1.17
 

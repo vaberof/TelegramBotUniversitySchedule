@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tg_bot_timetable/internal/model"
-	"github.com/tg_bot_timetable/internal/services"
+	"github.com/TelegramBotUniversitySchedule/internal/model"
+	"github.com/TelegramBotUniversitySchedule/internal/services"
 )
 
 // HandleMessage
