@@ -1,8 +1,8 @@
 package bot
 
 import (
-	"github.com/TelegramBotUniversitySchedule/internal/controller"
-	"github.com/TelegramBotUniversitySchedule/internal/model"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/controller"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/model"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -15,6 +15,7 @@ func Start() {
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData("Сегодня", "Сегодня"),
 				tgbotapi.NewInlineKeyboardButtonData("Завтра", "Завтра"),
+				tgbotapi.NewInlineKeyboardButtonData("Неделя", "Неделя"),
 			),
 		)
 	)

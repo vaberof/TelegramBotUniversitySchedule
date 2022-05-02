@@ -27,7 +27,7 @@ func NewBot() *tgbotapi.BotAPI{
 func loadConfig() *Config {
 
 	config := NewConfig()
-	yamlFile, err := ioutil.ReadFile("../configs/app.yaml")
+	yamlFile, err := ioutil.ReadFile("../../configs/app.yaml")
 	if err != nil{
 		log.Fatalf("Error %v", err)
 	}

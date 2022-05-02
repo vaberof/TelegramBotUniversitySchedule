@@ -1,7 +1,5 @@
 package model
 
-import "time"
-
 type Schedule struct {
 	Schedule []string
 }
@@ -13,12 +11,12 @@ func NewSchedule() *Schedule {
 // AddLessons adds lessons to schedule.
 func (s *Schedule) AddLessons(startTime, finishTime, lessonName, roomNumber, teacherName, lessonType string) {
 	s.Schedule = append(s.Schedule,
-		"Пара " + *getLessonNumber(startTime) + ". " +
-		lessonName + " (" +
-		startTime + "-" + finishTime +
-		", " + lessonType  + ", " +
-		"ауд. " + roomNumber + ", " +
-		"препод. " + teacherName + ")"  + "\n\n")
+		"#"+*getLessonNumber(startTime)+". "+
+			lessonName+" ("+
+			startTime+"-"+finishTime+
+			", "+lessonType+", "+
+			"ауд. "+roomNumber+", "+
+			"препод. "+teacherName+")"+"\n\n")
 }
 
 // AddGroupId adds study group id to schedule.
@@ -26,22 +24,26 @@ func (s *Schedule) AddGroupId(groupId string) {
 	s.Schedule = append([]string{groupId + "\n"}, s.Schedule...)
 }
 
-// AddDate adds needed date to schedule.
-func (s *Schedule) AddDate(date string, location *time.Location) {
-	d := getDate(date, location)
-	s.Schedule = append([]string{d.fullDate + " (" + d.day + ")" + "\n\n"}, s.Schedule...)
+// AddDate adds needed date to schedule while parsing on day.
+func (s *Schedule) AddDate(date *Date) {
+	s.Schedule = append([]string{date.fullDate + " (" + date.day + ")" + "\n\n"}, s.Schedule...)
+}
+
+// AddWeekDate adds needed date to schedule while parsing on week.
+func (s *Schedule) AddWeekDate(date *Date, index int) {
+	s.Schedule = append(s.Schedule, date.weekFullLDates[index]+" ("+date.weekDays[index]+")"+"\n\n")
 }
 
 // NoLessons adds "Пар нет" to schedule
 // if no lessons on a certain day in non-nil selection while parsing.
 func (s *Schedule) NoLessons() {
-	s.Schedule = append(s.Schedule,"Пар нет")
+	s.Schedule = append(s.Schedule, "Пар нет"+"\n\n")
 }
 
 // NotFound adds "Расписание не найдено"
 // if we catch in nil selection while parsing.
 func (s *Schedule) NotFound() {
-	s.Schedule = append(s.Schedule,"Расписание не найдено")
+	s.Schedule = append(s.Schedule, "Расписание не найдено")
 }
 
 // ScheduleExists returns true
