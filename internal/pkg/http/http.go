@@ -1,4 +1,4 @@
-package handler
+package http
 
 import (
 	"bytes"
@@ -9,6 +9,16 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 )
+
+// LoadHtmlPage loads html page.
+func LoadHtmlPage(url string) *goquery.Document{
+	document, err := goquery.NewDocumentFromReader(makeRequest(url))
+	if err != nil {
+		fmt.Errorf("data cannot be parsed as html %v\n", err)
+	}
+
+	return document
+}
 
 // makeRequest
 // returns response body of type Reader
@@ -29,14 +39,4 @@ func makeRequest(url string) io.Reader {
 	rBody := bytes.NewReader(body)
 
 	return rBody
-}
-
-// LoadHtmlPage loads html page.
-func LoadHtmlPage(url string) *goquery.Document{
-	document, err := goquery.NewDocumentFromReader(makeRequest(url))
-	if err != nil {
-		fmt.Errorf("data cannot be parsed as html %v\n", err)
-	}
-
-	return document
 }

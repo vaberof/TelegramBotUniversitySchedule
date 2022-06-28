@@ -1,45 +1,48 @@
-package model
+package unisite
 
 import (
 	"log"
 	"strings"
 	"time"
 
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/handler"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/model"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/http"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
 // parseDate finds html selection with date that user chosen.
-func parseDate(date, url string, location *time.Location) *goquery.Selection {
+func parseDate(parseData *model.ParseData, url string) *goquery.Selection {
 	var dateSelection *goquery.Selection
 
-	document := handler.LoadHtmlPage(url)
+	document := http.LoadHtmlPage(url)
 
 	document.Find("div.one_day-wrap").EachWithBreak(func(index int, tag *goquery.Selection) bool {
 		everDTag := tag.Find("div.everD")
 		everDTagValue := strings.ReplaceAll(everDTag.Text(), " ", "")
 
-		if everDTagValue == getDate(date, location).shortDate {
+		if everDTagValue == parseData.Date.Format("02.01") {
 			dateSelection = tag
+
 			return false
 		}
 		return true
 	})
+
 	return dateSelection
 }
 
 // parseWeekDate finds html selection with date for the week.
-func parseWeekDate(date, url string) *goquery.Selection {
+func parseWeekDate(parseDate time.Time, url string) *goquery.Selection {
 	var dateSelection *goquery.Selection
 
-	document := handler.LoadHtmlPage(url)
+	document := http.LoadHtmlPage(url)
 
 	document.Find("div.one_day-wrap").EachWithBreak(func(index int, tag *goquery.Selection) bool {
 		everDTag := tag.Find("div.everD")
 		everDTagValue := strings.ReplaceAll(everDTag.Text(), " ", "")
 
-		if everDTagValue == date {
+		if everDTagValue == parseDate.Format("02.01") {
 			dateSelection = tag
 			return false
 		}
@@ -49,27 +52,28 @@ func parseWeekDate(date, url string) *goquery.Selection {
 }
 
 // ParseDayLessons finds study group`s lessons for date that user chosen,
-// transforms Schedule using methods
-// and returns pointer to it.
-func ParseDayLessons(groupId, date, url string, location *time.Location) *Schedule {
+// adds them to model.Schedule and returns pointer to it.
+func ParseDayLessons(inputCallback, url string, parseData *model.ParseData) *model.Schedule {
 
 	var (
-		startTime   string // Начало пары
-		finishTime  string // Конец пары
-		lessonName  string // Название предмета
-		roomNumber  string // Номер аудитории
-		teacherName string // Имя преподавателя
-		lessonType  string // Тип пары (лекция/практика/лабораторная)
+		startTime   string   // Начало пары
+		finishTime  string   // Конец пары
+		lessonName  string   // Название предмета
+		roomNumber  string   // Номер аудитории
+		teacherName string   // Имя преподавателя
+		lessonType  string   // Тип пары (лекция/практика/лабораторная)
+		lessons     []string // check if we have lesson on certain day while parsing
 	)
 
-	dateSelection := parseDate(date, url, location)
-	dates := getDate(date, location)
+	dateSelection := parseDate(parseData, url)
 
-	schedule := NewSchedule()
+	daySchedule := model.NewDaySchedule()
+	schedule := model.Schedule{}
 
 	if isNilSelection(dateSelection) {
-		schedule.NotFound()
-		return schedule
+		daySchedule.NotFoundSchedule("not found")
+		schedule[inputCallback] = *daySchedule
+		return &schedule
 	}
 
 	dateSelection.Find(".one_lesson").EachWithBreak(func(index int, tag *goquery.Selection) bool {
@@ -81,31 +85,32 @@ func ParseDayLessons(groupId, date, url string, location *time.Location) *Schedu
 			teacherName = tag.Find(".name_of_teacher").Text()
 			lessonType = tag.Find(".type_less").Text()
 
-			schedule.AddLessons(
+			lessons = append(lessons, "have lessons")
+
+			daySchedule.AddLessons(
+				lessonName,
 				startTime,
 				finishTime,
-				lessonName,
+				lessonType,
 				roomNumber,
-				strings.TrimSpace(teacherName),
-				lessonType)
+				strings.TrimSpace(teacherName))
 		}
 		return true
 	})
 
-	if !schedule.ScheduleExists() {
-		schedule.NoLessons()
+	if !haveLessons(lessons) {
+		daySchedule.HaveNoLessons("no lessons")
+		schedule[inputCallback] = *daySchedule
+		return &schedule
 	}
 
-	schedule.AddDate(dates)
-	schedule.AddGroupId(groupId)
-
-	return schedule
+	schedule[inputCallback] = *daySchedule
+	return &schedule
 }
 
-// ParseWeekLessons finds study group`s lessons for the week,
-// transforms Schedule using methods
-// and returns pointer to it.
-func ParseWeekLessons(groupId, date, url string, location *time.Location) *Schedule {
+// ParseWeekLessons finds study group`s lessons for date that user chosen,
+// adds them to model.Schedule and returns pointer to it.
+func ParseWeekLessons(inputCallback, url string, parseData *model.ParseData) *model.Schedule {
 
 	var (
 		startTime   string   // Начало пары
@@ -114,22 +119,19 @@ func ParseWeekLessons(groupId, date, url string, location *time.Location) *Sched
 		roomNumber  string   // Номер аудитории
 		teacherName string   // Имя преподавателя
 		lessonType  string   // Тип пары (лекция/практика/лабораторная)
-		lessons     []string // Для проверки на наличие пар в конкретный день во время парсинга
+		lessons     []string // check if we have lesson on certain day while parsing
 	)
 
-	dates := getDate(date, location)
-
-	schedule := NewSchedule()
-	schedule.AddGroupId(groupId)
+	daySchedule := model.NewDaySchedule()
+	schedule := model.Schedule{}
 
 	for day := 0; day <= 6; day++ {
 		lessons = []string{}
 
-		schedule.AddWeekDate(dates, day)
-		dateSelection := parseWeekDate(dates.weekShortDates[day], url)
+		dateSelection := parseWeekDate(parseData.Dates[day], url)
 
 		if isNilSelection(dateSelection) {
-			schedule.NotFound()
+			daySchedule.NotFoundSchedule("not found")
 			continue
 		}
 
@@ -142,25 +144,32 @@ func ParseWeekLessons(groupId, date, url string, location *time.Location) *Sched
 				teacherName = tag.Find(".name_of_teacher").Text()
 				lessonType = tag.Find(".type_less").Text()
 
-				lessons = append(lessons, "lesson")
+				lessons = append(lessons, "have lessons")
 
-				schedule.AddLessons(
+				daySchedule.AddLessons(
+					lessonName,
 					startTime,
 					finishTime,
-					lessonName,
+					lessonType,
 					roomNumber,
-					strings.TrimSpace(teacherName),
-					lessonType)
+					strings.TrimSpace(teacherName))
 			}
 			return true
 		})
-		if len(lessons) == 0 {
-			schedule.NoLessons()
+
+		if !haveLessons(lessons) {
+			daySchedule.HaveNoLessons("no lessons")
 			continue
 		}
 	}
 
-	return schedule
+	schedule[inputCallback] = *daySchedule
+	return &schedule
+}
+
+// haveLessons checks if we have lessons while parsing.
+func haveLessons(lessons []string) bool {
+	return len(lessons) != 0
 }
 
 // isNilSelection checks if html selection exists.

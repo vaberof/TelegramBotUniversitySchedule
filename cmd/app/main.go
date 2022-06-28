@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/bot"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/bot"
 )
 
 func main() {

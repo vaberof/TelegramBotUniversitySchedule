@@ -1,111 +1,81 @@
 package model
 
 import (
-	"fmt"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/date"
+	"log"
 	"time"
 
 	"github.com/vaberof/goweekdate"
 )
 
-const location = "Asia/Novosibirsk"
+const Location = "Asia/Novosibirsk"
 
-type Date struct {
-	shortDate string
-	fullDate  string
-	day       string
-
-	weekShortDates []string
-	weekFullLDates []string
-	weekDays       []string
+// A ParseData contains...
+type ParseData struct {
+	Date  time.Time
+	Dates []time.Time
+	Days  []time.Weekday
 }
 
-func NewDate() *Date {
-	return &Date{}
+func NewParseData() *ParseData {
+	return &ParseData{}
 }
 
-// getDate returns object of type Date depending on the user`s choice to manipulate it in parser.
-func getDate(date string, location *time.Location) *Date {
-	d := NewDate()
+// GetParseData returns pointer to object of type ParseData depending on the user`s choice to manipulate it in parser.go.
+func GetParseData(inputCallBack string) *ParseData {
+	parseData := NewParseData()
+	loc := getDefaultLocation(Location)
 
-	switch date {
-	case "Сегодня":
-		d.today(location)
-		return d
-	case "Завтра":
-		d.tomorrow(location)
-		return d
-	case "Неделя":
-		d.week()
-		return d
+	switch inputCallBack {
+	case date.Today:
+		parseData.today(loc)
+		return parseData
+	case date.Tomorrow:
+		parseData.tomorrow(loc)
+		return parseData
+	case date.Week:
+		parseData.week()
+		return parseData
 	default:
-		return nil
+		parseData.nextWeek()
+		return parseData
 	}
 }
 
-// today gets today`s date and weekday.
-func (d *Date) today(location *time.Location) {
+// today gets today`s date.
+func (d *ParseData) today(location *time.Location) {
 	todayDate := time.Now().In(location)
-	day := todayDate.Weekday()
-
-	d.shortDate = todayDate.Format("02.01")
-	d.fullDate = todayDate.Format("02.01.2006")
-	d.day = dayTranslate(day.String())
+	d.Date = todayDate
 }
 
-// tomorrow gets next day date and weekday.
-func (d *Date) tomorrow(location *time.Location) {
+// tomorrow gets next day date.
+func (d *ParseData) tomorrow(location *time.Location) {
 	tomorrowDate := time.Now().Add(time.Hour * 24).In(location)
-	day := tomorrowDate.Weekday()
-
-	d.shortDate = tomorrowDate.Format("02.01")
-	d.fullDate = tomorrowDate.Format("02.01.2006")
-	d.day = dayTranslate(day.String())
+	d.Date = tomorrowDate
 }
 
-// week gets dates and the names of the current week days.
-func (d *Date) week() {
-	weekDate := weekdate.New(time.Now(), location)
+// week gets dates and the names of days of the current week via weekdate package.
+func (d *ParseData) week() {
+	wd := weekdate.New(time.Now(), Location)
 
-	d.weekShortDates = weekDate.ShortDates(1, true)
-	d.weekFullLDates = weekDate.FullDates(1, true)
-	d.setWeekDays()
+	d.Dates = wd.Dates(1, true)
+	d.Days = wd.WeekDays()
 }
 
-func (d *Date) setWeekDays() {
-	weekDate := weekdate.New(time.Now(), location)
-	wDays := weekDate.WeekDays()
+// nextWeek gets dates and the names of days of the next week via weekdate package.
+func (d *ParseData) nextWeek() {
+	wd := weekdate.New(time.Now(), Location)
 
-	for _, day := range wDays {
-		d.weekDays = append(d.weekDays, dayTranslate(day))
-	}
+	d.Dates = wd.Dates(2, false)
+	d.Days = wd.WeekDays()
 }
 
-// SetLocation sets "Novosibirsk" location.
-func SetLocation() *time.Location {
+// getDefaultLocation sets given location with time.LoadLocation.
+// Fatales if cannot load given location.
+func getDefaultLocation(location string) *time.Location {
 	loc, err := time.LoadLocation(location)
 	if err != nil {
-		fmt.Errorf("failed to load a location: %v", err)
+		log.Fatalf("failed to load a setLocation: %v", err)
 	}
-
 	return loc
-}
-
-// dayTranslate translates day of the week from english to russian.
-func dayTranslate(day string) string {
-	switch day {
-	case "Monday":
-		return "Понедельник"
-	case "Tuesday":
-		return "Вторник"
-	case "Wednesday":
-		return "Среда"
-	case "Thursday":
-		return "Четверг"
-	case "Friday":
-		return "Пятница"
-	case "Saturday":
-		return "Суббота"
-	default:
-		return "Воскресенье"
-	}
 }
