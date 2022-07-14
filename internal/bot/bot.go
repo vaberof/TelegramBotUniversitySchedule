@@ -1,14 +1,13 @@
 package bot
 
 import (
-	"io/ioutil"
-	"log"
-
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/handler"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/model"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/storage"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/integration/unisite"
+	"io/ioutil"
+	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gopkg.in/yaml.v2"
@@ -37,10 +36,10 @@ func Start() {
 	groupStorage := storage.NewGroupStorage()
 
 	for update := range updates {
-		//if commandRecieved(update) {
-		//	handleCommandMessage(bot, update)
 		if menuButtonPressed(update) {
 			handleMenuButtonPress(bot, update, botKeyboardMarkup, messageStorage, groupStorage)
+		} else if commandReceived(update) {
+			handleCommandMessage(bot, update)
 		} else if messageReceived(update) {
 			handleNewMessage(bot, update, botKeyboardMarkup, messageStorage)
 		}
@@ -116,10 +115,12 @@ func handleMenuButtonPress(bot *tgbotapi.BotAPI, update tgbotapi.Update, keyboar
 	bot.Send(responseCallback)
 }
 
-func commandRecieved(update tgbotapi.Update) bool {
+// commandReceived checks if user sent a command.
+func commandReceived(update tgbotapi.Update) bool {
 	return update.Message.IsCommand()
 }
 
+// handleCommandMessage handles received command and sends corresponding message to user.
 func handleCommandMessage(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	responseMessage := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 
