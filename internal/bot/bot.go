@@ -2,7 +2,6 @@ package bot
 
 import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/handler"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/model"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/storage"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/integration/unisite"
@@ -86,7 +85,7 @@ func menuButtonPressed(callBackQuery tgbotapi.Update) bool {
 }
 
 // handleMenuButtonPress handles pressed button value (today/tomorrow/week/next week)
-// and sending a schedule for date that user chosen.
+// and sending a schedule for utils that user chosen.
 // if user`s input group id is not exists, then sends a corresponding message.
 func handleMenuButtonPress(bot *tgbotapi.BotAPI, update tgbotapi.Update, keyboard tgbotapi.InlineKeyboardMarkup, msgStorage *storage.MessageStorage, grpStorage *storage.GroupStorage) {
 	responseCallback := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data)
@@ -95,10 +94,7 @@ func handleMenuButtonPress(bot *tgbotapi.BotAPI, update tgbotapi.Update, keyboar
 	callbackChatID := update.CallbackQuery.Message.Chat.ID
 	responseCallback.ReplyMarkup = keyboard
 
-	parseData := model.GetParseData(inputCallback)
-
 	log.Printf("%s\n", inputCallback)
-	log.Printf("%v\n", parseData)
 
 	studyGroupId, studyGroupUrl, err := handler.HandleMessage(callbackChatID, msgStorage, grpStorage)
 	if err != nil {
@@ -107,8 +103,8 @@ func handleMenuButtonPress(bot *tgbotapi.BotAPI, update tgbotapi.Update, keyboar
 		return
 	}
 
-	schedule := unisite.GetSchedule(studyGroupUrl, inputCallback, parseData)
-	scheduleString := service.ScheduleToString(studyGroupId, inputCallback, parseData, schedule)
+	schedule := unisite.GetSchedule(studyGroupUrl, inputCallback)
+	scheduleString := service.ScheduleToString(studyGroupId, inputCallback, schedule)
 
 	responseCallback.Text = *scheduleString
 	responseCallback.ParseMode = "markdown"

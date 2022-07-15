@@ -3,15 +3,14 @@ package http
 import (
 	"bytes"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	"io"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
 // LoadHtmlPage loads html page.
-func LoadHtmlPage(url string) *goquery.Document{
+func LoadHtmlPage(url string) *goquery.Document {
 	document, err := goquery.NewDocumentFromReader(makeRequest(url))
 	if err != nil {
 		fmt.Errorf("data cannot be parsed as html %v\n", err)
@@ -26,15 +25,17 @@ func LoadHtmlPage(url string) *goquery.Document{
 func makeRequest(url string) io.Reader {
 
 	res, err := http.Get(url)
+
 	if err != nil {
 		fmt.Errorf("request on %s failed: %w\n", url, err)
 	}
-	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		fmt.Errorf("read body failed %w\n", err)
 	}
+
+	defer res.Body.Close()
 
 	rBody := bytes.NewReader(body)
 

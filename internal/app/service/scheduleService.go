@@ -2,27 +2,32 @@ package service
 
 import (
 	"fmt"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/constants"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/date"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/utils"
 	"reflect"
 	"strconv"
+	"time"
 
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/model"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/date"
 )
 
 // ScheduleToString converts schedule of type model.Schedule to string type
 // to output it to user.
-func ScheduleToString(studyGroupId, inputCallback string, Date *model.ParseData, schedule *model.Schedule) *string {
+func ScheduleToString(studyGroupId, inputCallback string, schedule *model.Schedule) *string {
 	switch inputCallback {
-	case date.Today, date.Tomorrow:
-		return DayScheduleToString(studyGroupId, inputCallback, Date, schedule)
+	case constants.Today, constants.Tomorrow:
+		toParseDate := date.GetParseDate(inputCallback)
+		return DayScheduleToString(studyGroupId, inputCallback, toParseDate, schedule)
 	default:
-		return WeekScheduleToString(studyGroupId, inputCallback, Date, schedule)
+		toParseDates := date.GetParseDates(inputCallback)
+		return WeekScheduleToString(studyGroupId, inputCallback, toParseDates, schedule)
 	}
 }
 
 // DayScheduleToString converts schedule of type model.Schedule to string
 // if user chosen schedule on day (today/tomorrow).
-func DayScheduleToString(studyGroupId, inputCallback string, Date *model.ParseData, schedule *model.Schedule) *string {
+func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, schedule *model.Schedule) *string {
 	var scheduleString string
 
 	// lessonStartTimeField is number of StartTime field in model.Lesson
@@ -35,9 +40,9 @@ func DayScheduleToString(studyGroupId, inputCallback string, Date *model.ParseDa
 	// Adding user`s input group ID.
 	scheduleString = addGroupId(studyGroupId)
 
-	// Adding date (day, month, year) and week day of bold style
+	// Adding utils (day, month, year) and week day of bold style
 	// by using ParseMode "markdown" in bot.go.
-	scheduleString += addDate(Date)
+	scheduleString += addDate(date)
 
 	dereferenceSchedule := *schedule
 	convSchedule := dereferenceSchedule[inputCallback]
@@ -82,11 +87,11 @@ func DayScheduleToString(studyGroupId, inputCallback string, Date *model.ParseDa
 
 // WeekScheduleToString converts schedule of type model.Schedule to string
 // if user chosen schedule on week (current week/next week).
-func WeekScheduleToString(studyGroupId, inputCallback string, Date *model.ParseData, schedule *model.Schedule) *string {
+func WeekScheduleToString(studyGroupId, inputCallback string, dates []time.Time, schedule *model.Schedule) *string {
 	var scheduleString string
 
-	// index starting from 0 to 6 and necessary to go through arrays of dates and week days in !model.ParseData!
-	// to add date of every week day and name of the week day to scheduleString while converting schedule.
+	// index starting from 0 to 6 and necessary to go through arrays of dates and week days in !model.ParseDate!
+	// to add utils of every week day and name of the week day to scheduleString while converting schedule.
 	index := 0
 
 	// currentLessonNumber is number of certain lesson, will be compared with maxLessonNumber to
@@ -94,7 +99,7 @@ func WeekScheduleToString(studyGroupId, inputCallback string, Date *model.ParseD
 	currentLessonNumber := 0
 
 	// maxLessonNumber necessary to compare current lesson number with next lesson number while converting schedule
-	// to add correct date of each weekday and name of weekday.
+	// to add correct utils of each weekday and name of weekday.
 	maxLessonNumber := 1000
 
 	// lessonStartTimeField is number of StartTime field in model.Lesson
@@ -115,7 +120,7 @@ func WeekScheduleToString(studyGroupId, inputCallback string, Date *model.ParseD
 
 			if !haveLessons(lessonData.Field(lessonNameField)) {
 
-				scheduleString += addDates(index, Date)
+				scheduleString += addDates(index, dates)
 				scheduleString += addNoLessons()
 
 				currentLessonNumber = 0
@@ -126,7 +131,7 @@ func WeekScheduleToString(studyGroupId, inputCallback string, Date *model.ParseD
 
 			if !foundLessons(lessonData.Field(lessonNameField)) {
 
-				scheduleString += addDates(index, Date)
+				scheduleString += addDates(index, dates)
 				scheduleString += addNotFoundLessons()
 
 				currentLessonNumber = 0
@@ -138,9 +143,9 @@ func WeekScheduleToString(studyGroupId, inputCallback string, Date *model.ParseD
 			currentLessonNumber = model.GetLessonNumber(fmt.Sprint(lessonData.Field(lessonStartTimeField).Interface()))
 
 			// comparing lesson numbers: if next lesson number is less than current,
-			// than we get lessons for a new day and add date and day of the week.
+			// than we get lessons for a new day and add utils and day of the week.
 			if currentLessonNumber <= maxLessonNumber {
-				scheduleString += addDates(index, Date)
+				scheduleString += addDates(index, dates)
 				index++
 			}
 			maxLessonNumber = currentLessonNumber
@@ -220,22 +225,22 @@ func addNotFoundLessons() string {
 	return scheduleString
 }
 
-// addDate adds date and day of the week of certain day of bold style
+// addDate adds utils and day of the week of certain day of bold style
 // to schedule of type string while converting schedule on day.
-func addDate(Date *model.ParseData) string {
+func addDate(date time.Time) string {
 	scheduleString := fmt.Sprintf("*%s*", "Дата: ") +
-		fmt.Sprintf("*%s*", Date.Date.Format("02.01.2006")) +
-		fmt.Sprintf(" *(%s)*\n\n", date.WeekDayEngRu(Date.Date.Weekday()))
+		fmt.Sprintf("*%s*", date.Format("02.01.2006")) +
+		fmt.Sprintf(" *(%s)*\n\n", utils.WeekDayEngRu(date.Weekday()))
 
 	return scheduleString
 }
 
-// addDates adds date and day of the week of certain day of bold style
+// addDates adds utils and day of the week of certain day of bold style
 // to schedule of type string while converting schedule on week.
-func addDates(index int, Date *model.ParseData) string {
+func addDates(index int, dates []time.Time) string {
 	scheduleString := fmt.Sprintf("*%s*", "Дата: ") +
-		fmt.Sprintf("*%s*", Date.Dates[index].Format("02.01.2006")) +
-		fmt.Sprintf(" *(%s)*\n\n", date.WeekDayEngRu(Date.Days[index]))
+		fmt.Sprintf("*%s*", dates[index].Format("02.01.2006")) +
+		fmt.Sprintf(" *(%s)*\n\n", utils.WeekDayEngRu(dates[index].Weekday()))
 
 	return scheduleString
 }

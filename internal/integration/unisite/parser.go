@@ -11,8 +11,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-// parseDate finds html selection with date that user chosen.
-func parseDate(parseData *model.ParseData, url string) *goquery.Selection {
+// parseDate finds html selection with utils that user chosen.
+func parseDate(date time.Time, url string) *goquery.Selection {
 	var dateSelection *goquery.Selection
 
 	document := http.LoadHtmlPage(url)
@@ -21,7 +21,7 @@ func parseDate(parseData *model.ParseData, url string) *goquery.Selection {
 		everDTag := tag.Find("div.everD")
 		everDTagValue := strings.ReplaceAll(everDTag.Text(), " ", "")
 
-		if everDTagValue == parseData.Date.Format("02.01") {
+		if everDTagValue == date.Format("02.01") {
 			dateSelection = tag
 
 			return false
@@ -32,7 +32,7 @@ func parseDate(parseData *model.ParseData, url string) *goquery.Selection {
 	return dateSelection
 }
 
-// parseWeekDate finds html selection with date for the week.
+// parseWeekDate finds html selection with utils for the week.
 func parseWeekDate(parseDate time.Time, url string) *goquery.Selection {
 	var dateSelection *goquery.Selection
 
@@ -51,9 +51,9 @@ func parseWeekDate(parseDate time.Time, url string) *goquery.Selection {
 	return dateSelection
 }
 
-// ParseDayLessons finds study group`s lessons for date that user chosen,
+// ParseDayLessons finds study group`s lessons for utils that user chosen,
 // adds them to model.Schedule and returns pointer to it.
-func ParseDayLessons(inputCallback, url string, parseData *model.ParseData) *model.Schedule {
+func ParseDayLessons(inputCallback, url string, date time.Time) *model.Schedule {
 
 	var (
 		startTime   string   // Начало пары
@@ -65,7 +65,7 @@ func ParseDayLessons(inputCallback, url string, parseData *model.ParseData) *mod
 		lessons     []string // check if we have lesson on certain day while parsing
 	)
 
-	dateSelection := parseDate(parseData, url)
+	dateSelection := parseDate(date, url)
 
 	daySchedule := model.NewDaySchedule()
 	schedule := model.Schedule{}
@@ -108,9 +108,9 @@ func ParseDayLessons(inputCallback, url string, parseData *model.ParseData) *mod
 	return &schedule
 }
 
-// ParseWeekLessons finds study group`s lessons for date that user chosen,
+// ParseWeekLessons finds study group`s lessons for utils that user chosen,
 // adds them to model.Schedule and returns pointer to it.
-func ParseWeekLessons(inputCallback, url string, parseData *model.ParseData) *model.Schedule {
+func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Schedule {
 
 	var (
 		startTime   string   // Начало пары
@@ -128,7 +128,7 @@ func ParseWeekLessons(inputCallback, url string, parseData *model.ParseData) *mo
 	for day := 0; day <= 6; day++ {
 		lessons = []string{}
 
-		dateSelection := parseWeekDate(parseData.Dates[day], url)
+		dateSelection := parseWeekDate(dates[day], url)
 
 		if isNilSelection(dateSelection) {
 			daySchedule.NotFoundSchedule("not found")

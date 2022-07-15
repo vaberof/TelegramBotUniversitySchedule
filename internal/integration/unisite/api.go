@@ -2,15 +2,18 @@ package unisite
 
 import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/model"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/constants"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/date"
 )
 
-// GetSchedule returns schedule of type model.Schedule.
-func GetSchedule(url, inputCallback string, parseData *model.ParseData) *model.Schedule {
+// GetSchedule returns pointer to schedule of type model.Schedule.
+func GetSchedule(url, inputCallback string) *model.Schedule {
 	switch inputCallback {
-	case date.Today, date.Tomorrow:
-		return ParseDayLessons(inputCallback, url, parseData)
+	case constants.Today, constants.Tomorrow:
+		toParseDate := date.GetParseDate(inputCallback)
+		return ParseDayLessons(inputCallback, url, toParseDate)
 	default:
-		return ParseWeekLessons(inputCallback, url, parseData)
+		toParseDates := date.GetParseDates(inputCallback)
+		return ParseWeekLessons(inputCallback, url, toParseDates)
 	}
 }
