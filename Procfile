@@ -1,1 +1,1 @@
-worker: go run main.go
+worker: bundle exec rake jobs:work
