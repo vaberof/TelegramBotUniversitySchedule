@@ -11,7 +11,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-// parseDate finds html selection with utils that user chosen.
+// parseDate finds html selection with date that user chosen.
 func parseDate(date time.Time, url string) *goquery.Selection {
 	var dateSelection *goquery.Selection
 
@@ -32,26 +32,7 @@ func parseDate(date time.Time, url string) *goquery.Selection {
 	return dateSelection
 }
 
-// parseWeekDate finds html selection with utils for the week.
-func parseWeekDate(parseDate time.Time, url string) *goquery.Selection {
-	var dateSelection *goquery.Selection
-
-	document := http.LoadHtmlPage(url)
-
-	document.Find("div.one_day-wrap").EachWithBreak(func(index int, tag *goquery.Selection) bool {
-		everDTag := tag.Find("div.everD")
-		everDTagValue := strings.ReplaceAll(everDTag.Text(), " ", "")
-
-		if everDTagValue == parseDate.Format("02.01") {
-			dateSelection = tag
-			return false
-		}
-		return true
-	})
-	return dateSelection
-}
-
-// ParseDayLessons finds study group`s lessons for utils that user chosen,
+// ParseDayLessons finds study group`s lessons for day that user chosen,
 // adds them to model.Schedule and returns pointer to it.
 func ParseDayLessons(inputCallback, url string, date time.Time) *model.Schedule {
 
@@ -108,7 +89,7 @@ func ParseDayLessons(inputCallback, url string, date time.Time) *model.Schedule 
 	return &schedule
 }
 
-// ParseWeekLessons finds study group`s lessons for utils that user chosen,
+// ParseWeekLessons finds study group`s lessons for days that user chosen,
 // adds them to model.Schedule and returns pointer to it.
 func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Schedule {
 
@@ -128,7 +109,7 @@ func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Sched
 	for day := 0; day <= 6; day++ {
 		lessons = []string{}
 
-		dateSelection := parseWeekDate(dates[day], url)
+		dateSelection := parseDate(dates[day], url)
 
 		if isNilSelection(dateSelection) {
 			daySchedule.NotFoundSchedule("not found")
