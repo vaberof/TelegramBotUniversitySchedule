@@ -1,1 +1,1 @@
-worker: startBot
+worker: cmd/app go main.go
