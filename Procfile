@@ -1,1 +1,1 @@
-worker: cmd/app go main.go
+worker: cmd/app go run main.go
