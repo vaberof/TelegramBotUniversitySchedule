@@ -29,8 +29,8 @@ func Start() {
 	botUpdatesChannel := tgbotapi.NewUpdate(0)
 	botUpdatesChannel.Timeout = 60
 
-	updates := bot.GetUpdatesChan(botUpdatesChannel)
-
+	//	updates := bot.GetUpdatesChan(botUpdatesChannel)
+	updates := bot.ListenForWebhook("https://schedule-tg-bot.herokuapp.com/" + bot.Token)
 	messageStorage := storage.NewMessageStorage()
 	groupStorage := storage.NewGroupStorage()
 
