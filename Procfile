@@ -1,1 +1,1 @@
-web: src/TelegramBotUniversitySchedule/cmd/app
+worker: bin/TelegramBotUniversitySchedule
