@@ -7,7 +7,6 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/integration/unisite"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -28,18 +27,10 @@ func Start() {
 
 	bot := newBot()
 
-	_, err := tgbotapi.NewWebhook("https://schedule-tg-bot.herokuapp.com/" + bot.Token)
-	if err != nil {
-		log.Fatalln("Problem in setting Webhook", err.Error())
-	}
+	botUpdatesChannel := tgbotapi.NewUpdate(0)
+	botUpdatesChannel.Timeout = 60
 
-	//botUpdatesChannel := tgbotapi.NewUpdate(0)
-	//botUpdatesChannel.Timeout = 60
-
-	updates := bot.ListenForWebhook("/" + bot.Token)
-
-	//	updates := bot.GetUpdatesChan(botUpdatesChannel)
-	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+	updates := bot.GetUpdatesChan(botUpdatesChannel)
 
 	messageStorage := storage.NewMessageStorage()
 	groupStorage := storage.NewGroupStorage()
@@ -63,7 +54,6 @@ func newBot() *tgbotapi.BotAPI {
 	if err != nil {
 		log.Panic(err)
 	}
-
 	log.Printf("Bot %s is authorized.", bot.Self.UserName)
 
 	return bot
