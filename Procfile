@@ -1,1 +1,1 @@
-worker: bin/TelegramBotUniversitySchedule
+worker: bin/cmd/app
