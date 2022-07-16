@@ -1,1 +1,1 @@
-web: bin/TelegramBotUniversitySchedule/cmd/app
+web: bin/TelegramBotUniversitySchedule
