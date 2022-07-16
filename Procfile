@@ -1,1 +1,1 @@
-web: bin/TelegramBotUniversitySchedule/cmd/app/main.go
+web: TelegramBotUniversitySchedule/cmd/app/
