@@ -1,1 +1,1 @@
-worker: github.com/vaberof/TelegramBotUniversitySchedule/cmd/app
+worker: bin/TelegramBotUniversitySchedule
