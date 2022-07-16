@@ -1,1 +1,1 @@
-web: TelegramBotUniversitySchedule/cmd/app/
+web: TelegramBotUniversitySchedule/cmd/app
