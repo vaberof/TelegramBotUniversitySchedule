@@ -1,1 +1,1 @@
-worker: bin/cmd/app
+worker: bin/app
