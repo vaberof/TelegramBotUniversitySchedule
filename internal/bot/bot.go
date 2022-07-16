@@ -7,6 +7,7 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/integration/unisite"
 	"io/ioutil"
 	"log"
+	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gopkg.in/yaml.v2"
@@ -47,9 +48,9 @@ func Start() {
 
 // newBot creates bot.
 func newBot() *tgbotapi.BotAPI {
-	config := loadConfig()
+	//config := loadConfig()
 
-	bot, err := tgbotapi.NewBotAPI(config.Token)
+	bot, err := tgbotapi.NewBotAPI(os.Getenv("TOKEN"))
 	if err != nil {
 		log.Panic(err)
 	}
