@@ -7,7 +7,6 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/integration/unisite"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -32,8 +31,6 @@ func Start() {
 	botUpdatesChannel.Timeout = 60
 
 	updates := bot.GetUpdatesChan(botUpdatesChannel)
-
-	go http.ListenAndServe(":"+bot.Token, nil)
 
 	messageStorage := storage.NewMessageStorage()
 	groupStorage := storage.NewGroupStorage()
