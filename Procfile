@@ -1,0 +1,1 @@
+web: src/TelegramBotUniversitySchedule/cmd/app
