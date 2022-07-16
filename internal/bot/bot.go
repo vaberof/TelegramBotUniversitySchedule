@@ -7,6 +7,7 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/integration/unisite"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -32,6 +33,8 @@ func Start() {
 
 	//	updates := bot.GetUpdatesChan(botUpdatesChannel)
 	updates := bot.ListenForWebhook("https://schedule-tg-bot.herokuapp.com/" + bot.Token)
+	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+
 	messageStorage := storage.NewMessageStorage()
 	groupStorage := storage.NewGroupStorage()
 
