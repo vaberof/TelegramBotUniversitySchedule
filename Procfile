@@ -1,1 +1,0 @@
-web: TelegramBotUniversitySchedule/cmd/app
