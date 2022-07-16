@@ -5,12 +5,10 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/storage"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/integration/unisite"
-	"io/ioutil"
 	"log"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gopkg.in/yaml.v2"
 )
 
 // Start starts the bot.
@@ -48,8 +46,6 @@ func Start() {
 
 // newBot creates bot.
 func newBot() *tgbotapi.BotAPI {
-	//config := loadConfig()
-
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TOKEN"))
 	if err != nil {
 		log.Panic(err)
@@ -130,21 +126,4 @@ func handleCommandMessage(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		responseMessage.Text = "Не знаю такой команды"
 		bot.Send(responseMessage)
 	}
-}
-
-// loadConfig loads config from .yaml file.
-func loadConfig() *Config {
-
-	config := NewConfig()
-	yamlFile, err := ioutil.ReadFile("../../configs/app.yaml")
-	if err != nil {
-		log.Fatalf("Error %v", err)
-	}
-
-	err = yaml.Unmarshal(yamlFile, config)
-	if err != nil {
-		log.Fatalf("Error %v", err)
-	}
-
-	return config
 }
