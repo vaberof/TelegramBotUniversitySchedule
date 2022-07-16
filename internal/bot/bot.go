@@ -28,11 +28,17 @@ func Start() {
 
 	bot := newBot()
 
-	botUpdatesChannel := tgbotapi.NewUpdate(0)
-	botUpdatesChannel.Timeout = 60
+	_, err := tgbotapi.NewWebhook("https://schedule-tg-bot.herokuapp.com/" + bot.Token)
+	if err != nil {
+		log.Fatalln("Problem in setting Webhook", err.Error())
+	}
+
+	//botUpdatesChannel := tgbotapi.NewUpdate(0)
+	//botUpdatesChannel.Timeout = 60
+
+	updates := bot.ListenForWebhook("/" + bot.Token)
 
 	//	updates := bot.GetUpdatesChan(botUpdatesChannel)
-	updates := bot.ListenForWebhook("https://schedule-tg-bot.herokuapp.com/" + bot.Token)
 	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 
 	messageStorage := storage.NewMessageStorage()
