@@ -12,10 +12,14 @@ import (
 )
 
 // parseDate finds html selection with date that user chosen.
-func parseDate(date time.Time, url string) *goquery.Selection {
+func parseDate(date time.Time, url string) (*goquery.Selection, error) {
 	var dateSelection *goquery.Selection
 
-	document := http.LoadHtmlPage(url)
+	document, err := http.LoadHtmlPage(url)
+	if err != nil {
+		log.Printf("data cannot be parsed as html %v\n", err)
+		return dateSelection, err
+	}
 
 	document.Find("div.one_day-wrap").EachWithBreak(func(index int, tag *goquery.Selection) bool {
 		everDTag := tag.Find("div.everD")
@@ -29,7 +33,7 @@ func parseDate(date time.Time, url string) *goquery.Selection {
 		return true
 	})
 
-	return dateSelection
+	return dateSelection, nil
 }
 
 // ParseDayLessons finds study group`s lessons for day that user chosen,
@@ -46,13 +50,18 @@ func ParseDayLessons(inputCallback, url string, date time.Time) *model.Schedule 
 		lessons     []string // check if we have lesson on certain day while parsing
 	)
 
-	dateSelection := parseDate(date, url)
-
 	daySchedule := model.NewDaySchedule()
 	schedule := model.Schedule{}
 
+	dateSelection, err := parseDate(date, url)
+	if err != nil {
+		daySchedule = addHttpError(daySchedule)
+		schedule[inputCallback] = *daySchedule
+		return &schedule
+	}
+
 	if isNilSelection(dateSelection) {
-		daySchedule.NotFoundSchedule("not found")
+		daySchedule = addNotFoundLessons(daySchedule)
 		schedule[inputCallback] = *daySchedule
 		return &schedule
 	}
@@ -79,8 +88,8 @@ func ParseDayLessons(inputCallback, url string, date time.Time) *model.Schedule 
 		return true
 	})
 
-	if !haveLessons(lessons) {
-		daySchedule.HaveNoLessons("no lessons")
+	if !isHaveLessons(lessons) {
+		daySchedule = addNoLessons(daySchedule)
 		schedule[inputCallback] = *daySchedule
 		return &schedule
 	}
@@ -109,10 +118,15 @@ func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Sched
 	for day := 0; day <= 6; day++ {
 		lessons = []string{}
 
-		dateSelection := parseDate(dates[day], url)
+		dateSelection, err := parseDate(dates[day], url)
+		if err != nil {
+			daySchedule = addHttpError(daySchedule)
+			schedule[inputCallback] = *daySchedule
+			return &schedule
+		}
 
 		if isNilSelection(dateSelection) {
-			daySchedule.NotFoundSchedule("not found")
+			daySchedule = addNotFoundLessons(daySchedule)
 			continue
 		}
 
@@ -138,8 +152,8 @@ func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Sched
 			return true
 		})
 
-		if !haveLessons(lessons) {
-			daySchedule.HaveNoLessons("no lessons")
+		if !isHaveLessons(lessons) {
+			daySchedule = addNoLessons(daySchedule)
 			continue
 		}
 	}
@@ -148,8 +162,29 @@ func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Sched
 	return &schedule
 }
 
-// haveLessons checks if we have lessons while parsing.
-func haveLessons(lessons []string) bool {
+func addNotFoundLessons(daySchedule *model.DaySchedule) *model.DaySchedule {
+	*daySchedule = append(*daySchedule, model.Lesson{
+		Name: "not found",
+	})
+	return daySchedule
+}
+
+func addNoLessons(daySchedule *model.DaySchedule) *model.DaySchedule {
+	*daySchedule = append(*daySchedule, model.Lesson{
+		Name: "no lessons",
+	})
+	return daySchedule
+}
+
+func addHttpError(daySchedule *model.DaySchedule) *model.DaySchedule {
+	*daySchedule = append(*daySchedule, model.Lesson{
+		Name: "http error",
+	})
+	return daySchedule
+}
+
+// isHaveLessons checks if we have lessons while parsing.
+func isHaveLessons(lessons []string) bool {
 	return len(lessons) != 0
 }
 

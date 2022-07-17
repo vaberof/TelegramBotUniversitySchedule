@@ -16,7 +16,7 @@ func NewDaySchedule() *DaySchedule {
 	return &DaySchedule{}
 }
 
-func (d *DaySchedule) AddLessons(lessonName, startTime, finishTime, lessonType, roomNumber, teacherName  string) {
+func (d *DaySchedule) AddLessons(lessonName, startTime, finishTime, lessonType, roomNumber, teacherName string) {
 	*d = append(*d, Lesson{
 		lessonName,
 		startTime,
@@ -24,18 +24,6 @@ func (d *DaySchedule) AddLessons(lessonName, startTime, finishTime, lessonType, 
 		lessonType,
 		roomNumber,
 		teacherName,
-	})
-}
-
-func (d *DaySchedule) NotFoundSchedule(message string) {
-	*d = append(*d, Lesson{
-		Name: message,
-	})
-}
-
-func (d *DaySchedule) HaveNoLessons(message string) {
-	*d = append(*d, Lesson{
-		Name: message,
 	})
 }
 

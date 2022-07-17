@@ -46,6 +46,7 @@ func Start() {
 
 // newBot creates bot.
 func newBot() *tgbotapi.BotAPI {
+
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TOKEN"))
 	if err != nil {
 		log.Panic(err)
@@ -90,7 +91,7 @@ func handleMenuButtonPress(bot *tgbotapi.BotAPI, update tgbotapi.Update, keyboar
 	callbackChatID := update.CallbackQuery.Message.Chat.ID
 	responseCallback.ReplyMarkup = keyboard
 
-	log.Printf("%s\n", inputCallback)
+	log.Printf("user %s pressed %s button\n", update.SentFrom(), inputCallback)
 
 	studyGroupId, studyGroupUrl, err := handler.HandleMessage(callbackChatID, msgStorage, grpStorage)
 	if err != nil {
@@ -123,7 +124,7 @@ func handleCommandMessage(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 			"2. Выберите день, на который хотите получить расписание\n"
 		bot.Send(responseMessage)
 	default:
-		responseMessage.Text = "Не знаю такой команды"
+		responseMessage.Text = "Неизвестная команда"
 		bot.Send(responseMessage)
 	}
 }

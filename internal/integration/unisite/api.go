@@ -10,10 +10,10 @@ import (
 func GetSchedule(url, inputCallback string) *model.Schedule {
 	switch inputCallback {
 	case constants.Today, constants.Tomorrow:
-		toParseDate := date.GetParseDate(inputCallback)
-		return ParseDayLessons(inputCallback, url, toParseDate)
+		dateToParse := date.GetParseDate(inputCallback)
+		return ParseDayLessons(inputCallback, url, dateToParse)
 	default:
-		toParseDates := date.GetParseDates(inputCallback)
-		return ParseWeekLessons(inputCallback, url, toParseDates)
+		datesToParse := date.GetParseDates(inputCallback)
+		return ParseWeekLessons(inputCallback, url, datesToParse)
 	}
 }
