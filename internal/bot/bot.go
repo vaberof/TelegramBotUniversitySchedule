@@ -101,7 +101,7 @@ func menuButtonPressed(callBackQuery tgbotapi.Update) bool {
 }
 
 // handleMenuButtonPress handles pressed button value (today/tomorrow/week/next week)
-// and sending a schedule for dates that user chosen.
+// and sending a schedule for date that user chosen.
 // if user`s input group id is not exists, then sends a corresponding message.
 func handleMenuButtonPress(
 	bot *tgbotapi.BotAPI,

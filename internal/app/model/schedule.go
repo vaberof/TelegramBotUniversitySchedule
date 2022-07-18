@@ -30,23 +30,20 @@ func (d *DaySchedule) AddLessons(lessonName, startTime, finishTime, lessonType, 
 // GetLessonNumber checks time when lesson starts
 // and returns corresponding lesson`s number.
 func GetLessonNumber(startTime string) int {
-	var lessonNumber int
-
 	switch startTime {
 	case "10:10":
-		lessonNumber = 2
+		return 2
 	case "12:10":
-		lessonNumber = 3
+		return 3
 	case "13:50":
-		lessonNumber = 4
+		return 4
 	case "15:30":
-		lessonNumber = 5
+		return 5
 	case "17:10":
-		lessonNumber = 6
+		return 6
 	case "18:50":
-		lessonNumber = 7
+		return 7
 	default:
-		lessonNumber = 1
+		return 1
 	}
-	return lessonNumber
 }
