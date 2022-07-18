@@ -2,12 +2,13 @@ package bot
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	log "github.com/sirupsen/logrus"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/handler"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/storage"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/integration/unisite"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/date"
-	"log"
+
 	"os"
 )
 
@@ -51,9 +52,15 @@ func Start() {
 func newBot() *tgbotapi.BotAPI {
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TOKEN"))
 	if err != nil {
-		log.Panic(err)
+		log.WithFields(log.Fields{
+			"bot":   bot.Self.UserName,
+			"error": err,
+		}).Panic("Failed to create a bot")
 	}
-	log.Printf("Bot %s is authorized.", bot.Self.UserName)
+
+	log.WithFields(log.Fields{
+		"bot": bot.Self.UserName,
+	}).Info("Bot is authorized")
 
 	return bot
 }
@@ -76,6 +83,11 @@ func handleNewMessage(
 
 	inputText := responseMessage.Text
 	chatID := responseMessage.ChatID
+
+	log.WithFields(log.Fields{
+		"username": update.SentFrom(),
+		"message":  inputText,
+	}).Info("User sent a message")
 
 	msgStorage.AddMessageData(chatID, inputText)
 
@@ -106,34 +118,49 @@ func handleMenuButtonPress(
 	responseCallback.ReplyMarkup = keyboard
 	responseCallback.ParseMode = "markdown"
 
-	log.Printf("user %s pressed %s button\n", update.SentFrom(), inputCallback)
+	log.WithFields(log.Fields{
+		"username": update.SentFrom(),
+		"button":   inputCallback,
+	}).Info("User requested a schedule")
+
+	studyGroupId, studyGroupUrl, err := handler.HandleMessage(callbackChatID, msgStorage, grpStorage)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"username": update.SentFrom(),
+			"message":  msgStorage.MessageData[callbackChatID],
+			"func":     "handleMenuButtonPress",
+		}).Error("Incorrect group ID")
+
+		responseCallback.Text = err.Error()
+		bot.Send(responseCallback)
+		return
+	}
 
 	currentTime := date.GetCurrentTime()
-	log.Printf("current time: %v", currentTime)
-	log.Printf("expire time: %v", scheduleStorage.ExpireTime)
 
-	if storage.ExpiredTime(currentTime, scheduleStorage) {
+	if storage.TimeExpired(currentTime, scheduleStorage) {
 		scheduleStorage = storage.NewScheduleStorage()
-		log.Printf("time expired")
-		log.Printf("expire time now set to: %v", scheduleStorage.ExpireTime.Format("2006-01-02 15:04:05"))
+
+		log.WithFields(log.Fields{
+			"current time": currentTime,
+			"expire time":  scheduleStorage.ExpireTime,
+			"time expired": true,
+		}).Info("New expire time settled")
 	}
 
 	cachedScheduleIndex := storage.GetCachedScheduleIndex(callbackChatID, inputCallback, scheduleStorage)
 
 	if cachedScheduleIndex != -1 {
-		log.Printf("chatID: %d, schedule sent from scheduleStorage", callbackChatID)
-		log.Printf("scheduleStorage expire time: %v", scheduleStorage.ExpireTime.Format("2006-01-02 15:04:05"))
+		log.WithFields(log.Fields{
+			"username":    update.SentFrom(),
+			"chatID":      callbackChatID,
+			"key":         inputCallback,
+			"expire time": scheduleStorage.ExpireTime,
+		}).Info("Schedule settled from schedule storage")
 
 		scheduleString := scheduleStorage.Schedule[callbackChatID][cachedScheduleIndex][inputCallback]
 
 		responseCallback.Text = scheduleString
-		bot.Send(responseCallback)
-		return
-	}
-
-	studyGroupId, studyGroupUrl, err := handler.HandleMessage(callbackChatID, msgStorage, grpStorage)
-	if err != nil {
-		responseCallback.Text = err.Error()
 		bot.Send(responseCallback)
 		return
 	}

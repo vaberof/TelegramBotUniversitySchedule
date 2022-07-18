@@ -6,11 +6,11 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/constants"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/date"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/utils"
-	"log"
 	"reflect"
 	"strconv"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/model"
 )
 
@@ -94,7 +94,13 @@ func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, sch
 		inputCallback: scheduleString,
 	}
 	scheduleStorage.Schedule[chatID] = append(scheduleStorage.Schedule[chatID], toStoreSchedule)
-	log.Printf("schedule cached: chatID: %d, key: %s", chatID, inputCallback)
+
+	log.WithFields(log.Fields{
+		"chatID":      chatID,
+		"key":         inputCallback,
+		"expire time": scheduleStorage.ExpireTime,
+	}).Info("The schedule is cached")
+
 	return &scheduleString
 }
 
@@ -195,6 +201,12 @@ func WeekScheduleToString(studyGroupId, inputCallback string, dates []time.Time,
 		inputCallback: scheduleString,
 	}
 	scheduleStorage.Schedule[chatID] = append(scheduleStorage.Schedule[chatID], toStoreSchedule)
+
+	log.WithFields(log.Fields{
+		"chatID":      chatID,
+		"key":         inputCallback,
+		"expire time": scheduleStorage.ExpireTime,
+	}).Info("The schedule is cached")
 
 	return &scheduleString
 }

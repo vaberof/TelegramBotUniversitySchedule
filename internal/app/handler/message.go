@@ -3,7 +3,6 @@ package handler
 import (
 	"errors"
 	"fmt"
-
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/storage"
 )
 

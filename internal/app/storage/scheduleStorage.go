@@ -37,6 +37,6 @@ func GetCachedScheduleIndex(chatID int64, inputCallBack string, scheduleStorage 
 	return -1
 }
 
-func ExpiredTime(currentTime time.Time, scheduleStorage *ScheduleStorage) bool {
+func TimeExpired(currentTime time.Time, scheduleStorage *ScheduleStorage) bool {
 	return currentTime.After(scheduleStorage.ExpireTime)
 }

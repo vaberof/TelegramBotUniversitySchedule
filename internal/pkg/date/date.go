@@ -1,7 +1,7 @@
 package date
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"time"
 
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/constants"
@@ -55,8 +55,13 @@ func nextWeek() []time.Time {
 func GetDefaultLocation(location string) *time.Location {
 	loc, err := time.LoadLocation(location)
 	if err != nil {
-		log.Fatalf("failed to load a setLocation: %v", err)
+		log.WithFields(log.Fields{
+			"location": location,
+			"error":    err,
+			"func":     "GetDefaultLocation",
+		}).Fatal("Failed to load a location")
 	}
+
 	return loc
 }
 

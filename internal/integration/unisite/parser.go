@@ -1,7 +1,7 @@
 package unisite
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 
@@ -17,7 +17,11 @@ func parseDate(date time.Time, url string) (*goquery.Selection, error) {
 
 	document, err := http.LoadHtmlPage(url)
 	if err != nil {
-		log.Printf("data cannot be parsed as html %v\n", err)
+		log.WithFields(log.Fields{
+			"error": err,
+			"func":  "parseDate",
+		}).Error("Failed while parsing")
+
 		return dateSelection, err
 	}
 
@@ -191,7 +195,7 @@ func isHaveLessons(lessons []string) bool {
 // isNilSelection checks if html selection exists.
 func isNilSelection(selection *goquery.Selection) bool {
 	if selection == nil {
-		log.Printf("tag not found: %v ", selection)
+		log.Info("Html tag not found")
 		return true
 	}
 	return false

@@ -2,12 +2,14 @@ package http
 
 import (
 	"bytes"
-	"github.com/PuerkitoBio/goquery"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 // LoadHtmlPage loads html page.
@@ -22,7 +24,12 @@ func LoadHtmlPage(url string) (*goquery.Document, error) {
 	document, err := goquery.NewDocumentFromReader(rBody)
 
 	if err != nil {
-		log.Printf("data cannot be parsed as html %v\n", err)
+		log.WithFields(log.Fields{
+			"body":  rBody,
+			"error": err,
+			"func":  "LoadHtmlPage",
+		}).Error("Data cannot be parsed as html")
+
 		return document, err
 	}
 
@@ -39,7 +46,12 @@ func makeRequest(url string) (io.Reader, error) {
 	res, err := client.Get(url)
 
 	if err != nil {
-		log.Printf("request on %s failed: %v\n", url, err)
+		log.WithFields(log.Fields{
+			"url":   url,
+			"error": err,
+			"func":  "makeRequest",
+		}).Error("Request is failed")
+
 		emptyBody := bytes.NewReader([]byte{})
 		return emptyBody, err
 	}
@@ -47,7 +59,12 @@ func makeRequest(url string) (io.Reader, error) {
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		log.Printf("read body failed: %v\n", err)
+		log.WithFields(log.Fields{
+			"url":   url,
+			"error": err,
+			"func":  "makeRequest",
+		}).Error("Read body is failed")
+
 		emptyBody := bytes.NewReader([]byte{})
 		return emptyBody, err
 	}
