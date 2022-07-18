@@ -16,20 +16,20 @@ import (
 
 // ScheduleToString converts schedule of type model.Schedule to string type
 // to output it to user.
-func ScheduleToString(studyGroupId, inputCallback string, schedule *model.Schedule, cache *storage.ScheduleStorage, chatID int64) *string {
+func ScheduleToString(studyGroupId, inputCallback string, schedule *model.Schedule, scheduleStorage *storage.ScheduleStorage, chatID int64) *string {
 	switch inputCallback {
 	case constants.Today, constants.Tomorrow:
 		dateToParse := date.GetParseDate(inputCallback)
-		return DayScheduleToString(studyGroupId, inputCallback, dateToParse, schedule, cache, chatID)
+		return DayScheduleToString(studyGroupId, inputCallback, dateToParse, schedule, scheduleStorage, chatID)
 	default:
 		datesToParse := date.GetParseDates(inputCallback)
-		return WeekScheduleToString(studyGroupId, inputCallback, datesToParse, schedule, cache, chatID)
+		return WeekScheduleToString(studyGroupId, inputCallback, datesToParse, schedule, scheduleStorage, chatID)
 	}
 }
 
 // DayScheduleToString converts schedule of type model.Schedule to string
 // if user chosen schedule on day (today/tomorrow).
-func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, schedule *model.Schedule, cache *storage.ScheduleStorage, chatID int64) *string {
+func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, schedule *model.Schedule, scheduleStorage *storage.ScheduleStorage, chatID int64) *string {
 	var scheduleString string
 
 	// lessonStartTimeField is number of StartTime field in model.Lesson
@@ -90,17 +90,17 @@ func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, sch
 		}
 	}
 
-	storeScheduleString := map[string]string{
+	toStoreSchedule := map[string]string{
 		inputCallback: scheduleString,
 	}
-	cache.Schedule[chatID] = append(cache.Schedule[chatID], storeScheduleString)
+	scheduleStorage.Schedule[chatID] = append(scheduleStorage.Schedule[chatID], toStoreSchedule)
 	log.Printf("schedule cached: chatID: %d, key: %s", chatID, inputCallback)
 	return &scheduleString
 }
 
 // WeekScheduleToString converts schedule of type model.Schedule to string
 // if user chosen schedule on week (current week/next week).
-func WeekScheduleToString(studyGroupId, inputCallback string, dates []time.Time, schedule *model.Schedule, cache *storage.ScheduleStorage, chatID int64) *string {
+func WeekScheduleToString(studyGroupId, inputCallback string, dates []time.Time, schedule *model.Schedule, scheduleStorage *storage.ScheduleStorage, chatID int64) *string {
 	var scheduleString string
 
 	// index starting from 0 to 6 and necessary to go through given array of dates
@@ -191,10 +191,10 @@ func WeekScheduleToString(studyGroupId, inputCallback string, dates []time.Time,
 		}
 	}
 
-	storeScheduleString := map[string]string{
+	toStoreSchedule := map[string]string{
 		inputCallback: scheduleString,
 	}
-	cache.Schedule[chatID] = append(cache.Schedule[chatID], storeScheduleString)
+	scheduleStorage.Schedule[chatID] = append(scheduleStorage.Schedule[chatID], toStoreSchedule)
 
 	return &scheduleString
 }
