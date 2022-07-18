@@ -2,9 +2,11 @@ package service
 
 import (
 	"fmt"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/storage"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/constants"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/date"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/utils"
+	"log"
 	"reflect"
 	"strconv"
 	"time"
@@ -14,20 +16,20 @@ import (
 
 // ScheduleToString converts schedule of type model.Schedule to string type
 // to output it to user.
-func ScheduleToString(studyGroupId, inputCallback string, schedule *model.Schedule) *string {
+func ScheduleToString(studyGroupId, inputCallback string, schedule *model.Schedule, cache *storage.ScheduleStorage, chatID int64) *string {
 	switch inputCallback {
 	case constants.Today, constants.Tomorrow:
-		toParseDate := date.GetParseDate(inputCallback)
-		return DayScheduleToString(studyGroupId, inputCallback, toParseDate, schedule)
+		dateToParse := date.GetParseDate(inputCallback)
+		return DayScheduleToString(studyGroupId, inputCallback, dateToParse, schedule, cache, chatID)
 	default:
-		toParseDates := date.GetParseDates(inputCallback)
-		return WeekScheduleToString(studyGroupId, inputCallback, toParseDates, schedule)
+		datesToParse := date.GetParseDates(inputCallback)
+		return WeekScheduleToString(studyGroupId, inputCallback, datesToParse, schedule, cache, chatID)
 	}
 }
 
 // DayScheduleToString converts schedule of type model.Schedule to string
 // if user chosen schedule on day (today/tomorrow).
-func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, schedule *model.Schedule) *string {
+func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, schedule *model.Schedule, cache *storage.ScheduleStorage, chatID int64) *string {
 	var scheduleString string
 
 	// lessonStartTimeField is number of StartTime field in model.Lesson
@@ -64,7 +66,6 @@ func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, sch
 			if isHttpError(lessonData.Field(lessonNameField)) {
 				scheduleString = addGroupId(studyGroupId)
 				scheduleString += addHttpError()
-
 				return &scheduleString
 			}
 
@@ -89,12 +90,17 @@ func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, sch
 		}
 	}
 
+	storeScheduleString := map[string]string{
+		inputCallback: scheduleString,
+	}
+	cache.Schedule[chatID] = append(cache.Schedule[chatID], storeScheduleString)
+	log.Printf("schedule cached: chatID: %d, key: %s", chatID, inputCallback)
 	return &scheduleString
 }
 
 // WeekScheduleToString converts schedule of type model.Schedule to string
 // if user chosen schedule on week (current week/next week).
-func WeekScheduleToString(studyGroupId, inputCallback string, dates []time.Time, schedule *model.Schedule) *string {
+func WeekScheduleToString(studyGroupId, inputCallback string, dates []time.Time, schedule *model.Schedule, cache *storage.ScheduleStorage, chatID int64) *string {
 	var scheduleString string
 
 	// index starting from 0 to 6 and necessary to go through given array of dates
@@ -185,6 +191,11 @@ func WeekScheduleToString(studyGroupId, inputCallback string, dates []time.Time,
 		}
 	}
 
+	storeScheduleString := map[string]string{
+		inputCallback: scheduleString,
+	}
+	cache.Schedule[chatID] = append(cache.Schedule[chatID], storeScheduleString)
+
 	return &scheduleString
 }
 
@@ -254,7 +265,7 @@ func addDate(date time.Time) string {
 	return scheduleString
 }
 
-// addDates adds date and day of the week of certain day of bold style
+// addDates adds date and day of the week of certain day
 // to schedule of type string while converting schedule on week.
 func addDates(index int, dates []time.Time) string {
 	scheduleString := fmt.Sprintf("*%s*", "Дата: ") +

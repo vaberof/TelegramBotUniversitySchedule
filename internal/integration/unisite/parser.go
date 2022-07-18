@@ -55,13 +55,13 @@ func ParseDayLessons(inputCallback, url string, date time.Time) *model.Schedule 
 
 	dateSelection, err := parseDate(date, url)
 	if err != nil {
-		daySchedule = addHttpError(daySchedule)
+		daySchedule = addHttpErrorMsg(daySchedule)
 		schedule[inputCallback] = *daySchedule
 		return &schedule
 	}
 
 	if isNilSelection(dateSelection) {
-		daySchedule = addNotFoundLessons(daySchedule)
+		daySchedule = addNotFoundLessonsMsg(daySchedule)
 		schedule[inputCallback] = *daySchedule
 		return &schedule
 	}
@@ -89,7 +89,7 @@ func ParseDayLessons(inputCallback, url string, date time.Time) *model.Schedule 
 	})
 
 	if !isHaveLessons(lessons) {
-		daySchedule = addNoLessons(daySchedule)
+		daySchedule = addNoLessonsMsg(daySchedule)
 		schedule[inputCallback] = *daySchedule
 		return &schedule
 	}
@@ -120,13 +120,13 @@ func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Sched
 
 		dateSelection, err := parseDate(dates[day], url)
 		if err != nil {
-			daySchedule = addHttpError(daySchedule)
+			daySchedule = addHttpErrorMsg(daySchedule)
 			schedule[inputCallback] = *daySchedule
 			return &schedule
 		}
 
 		if isNilSelection(dateSelection) {
-			daySchedule = addNotFoundLessons(daySchedule)
+			daySchedule = addNotFoundLessonsMsg(daySchedule)
 			continue
 		}
 
@@ -153,7 +153,7 @@ func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Sched
 		})
 
 		if !isHaveLessons(lessons) {
-			daySchedule = addNoLessons(daySchedule)
+			daySchedule = addNoLessonsMsg(daySchedule)
 			continue
 		}
 	}
@@ -162,21 +162,21 @@ func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Sched
 	return &schedule
 }
 
-func addNotFoundLessons(daySchedule *model.DaySchedule) *model.DaySchedule {
+func addNotFoundLessonsMsg(daySchedule *model.DaySchedule) *model.DaySchedule {
 	*daySchedule = append(*daySchedule, model.Lesson{
 		Name: "not found",
 	})
 	return daySchedule
 }
 
-func addNoLessons(daySchedule *model.DaySchedule) *model.DaySchedule {
+func addNoLessonsMsg(daySchedule *model.DaySchedule) *model.DaySchedule {
 	*daySchedule = append(*daySchedule, model.Lesson{
 		Name: "no lessons",
 	})
 	return daySchedule
 }
 
-func addHttpError(daySchedule *model.DaySchedule) *model.DaySchedule {
+func addHttpErrorMsg(daySchedule *model.DaySchedule) *model.DaySchedule {
 	*daySchedule = append(*daySchedule, model.Lesson{
 		Name: "http error",
 	})
