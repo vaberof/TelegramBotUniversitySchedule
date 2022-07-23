@@ -83,15 +83,15 @@ func handleNewMessage(
 	inputText := responseMessage.Text
 	chatID := responseMessage.ChatID
 
-	log.WithFields(log.Fields{
-		"username": update.SentFrom(),
-		"message":  inputText,
-	}).Info("User sent a message")
-
 	msgStorage.AddMessageData(chatID, inputText)
 
 	responseMessage.ReplyMarkup = keyboard
 	bot.Send(responseMessage)
+
+	log.WithFields(log.Fields{
+		"username": update.SentFrom(),
+		"message":  inputText,
+	}).Info("User sent a message")
 }
 
 // menuButtonPressed checks if user pressed the button of replied message to him.
@@ -124,14 +124,14 @@ func handleMenuButtonPress(
 
 	studyGroupId, studyGroupUrl, err := handler.HandleMessage(callbackChatID, msgStorage, grpStorage)
 	if err != nil {
+		responseCallback.Text = err.Error()
+		bot.Send(responseCallback)
+
 		log.WithFields(log.Fields{
 			"username": update.SentFrom(),
 			"message":  msgStorage.MessageData[callbackChatID],
 			"func":     "handleMenuButtonPress",
 		}).Error("Incorrect group ID")
-
-		responseCallback.Text = err.Error()
-		bot.Send(responseCallback)
 		return
 	}
 
@@ -151,22 +151,28 @@ func handleMenuButtonPress(
 	cachedScheduleIndex := storage.GetCachedScheduleIndex(callbackChatID, inputCallback, scheduleStorage)
 
 	if cachedScheduleIndex != -1 {
+		scheduleString := scheduleStorage.Schedule[callbackChatID][cachedScheduleIndex][inputCallback]
+
+		responseCallback.Text = scheduleString
+		bot.Send(responseCallback)
+
 		log.WithFields(log.Fields{
 			"username":    update.SentFrom(),
 			"chatID":      callbackChatID,
 			"key":         inputCallback,
 			"expire time": scheduleStorage.ExpireTime,
 		}).Info("Schedule settled from schedule storage")
+		return
+	}
 
-		scheduleString := scheduleStorage.Schedule[callbackChatID][cachedScheduleIndex][inputCallback]
-
-		responseCallback.Text = scheduleString
+	schedule, err := unisite.GetSchedule(studyGroupUrl, inputCallback)
+	if err != nil {
+		responseCallback.Text = err.Error()
 		bot.Send(responseCallback)
 		return
 	}
 
-	schedule := unisite.GetSchedule(studyGroupUrl, inputCallback)
-	scheduleString := service.ScheduleToString(studyGroupId, inputCallback, schedule, scheduleStorage, callbackChatID)
+	scheduleString := service.ScheduleToString(callbackChatID, studyGroupId, inputCallback, schedule, scheduleStorage)
 
 	responseCallback.Text = *scheduleString
 	bot.Send(responseCallback)
@@ -181,14 +187,18 @@ func commandReceived(update tgbotapi.Update) bool {
 func handleCommandMessage(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	responseMessage := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 
+	startCommandText := "Как пользоваться ботом:\n" +
+		"1. Введите номер группы (БИ-11.1/БИ-11.2 и т.д.)\n" +
+		"2. Выберите день, на который хотите получить расписание\n"
+
+	defaultMessageText := "Неизвестная команда"
+
 	switch update.Message.Command() {
 	case "start":
-		responseMessage.Text = "Как пользоваться ботом:\n" +
-			"1. Введите номер группы (БИ-11.1/БИ-11.2 и т.д.)\n" +
-			"2. Выберите день, на который хотите получить расписание\n"
+		responseMessage.Text = startCommandText
 		bot.Send(responseMessage)
 	default:
-		responseMessage.Text = "Неизвестная команда"
+		responseMessage.Text = defaultMessageText
 		bot.Send(responseMessage)
 	}
 }

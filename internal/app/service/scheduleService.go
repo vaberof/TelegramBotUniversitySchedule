@@ -16,20 +16,33 @@ import (
 
 // ScheduleToString converts schedule of type model.Schedule to string type
 // to output it to user.
-func ScheduleToString(studyGroupId, inputCallback string, schedule *model.Schedule, scheduleStorage *storage.ScheduleStorage, chatID int64) *string {
+func ScheduleToString(
+	chatID int64,
+	studyGroupId,
+	inputCallback string,
+	schedule *model.Schedule,
+	scheduleStorage *storage.ScheduleStorage) *string {
+
 	switch inputCallback {
 	case constants.Today, constants.Tomorrow:
 		dateToParse := date.GetParseDate(inputCallback)
-		return DayScheduleToString(studyGroupId, inputCallback, dateToParse, schedule, scheduleStorage, chatID)
+		return DayScheduleToString(chatID, studyGroupId, inputCallback, dateToParse, schedule, scheduleStorage)
 	default:
 		datesToParse := date.GetParseDates(inputCallback)
-		return WeekScheduleToString(studyGroupId, inputCallback, datesToParse, schedule, scheduleStorage, chatID)
+		return WeekScheduleToString(chatID, studyGroupId, inputCallback, datesToParse, schedule, scheduleStorage)
 	}
 }
 
 // DayScheduleToString converts schedule of type model.Schedule to string
-// if user chosen schedule on day (today/tomorrow).
-func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, schedule *model.Schedule, scheduleStorage *storage.ScheduleStorage, chatID int64) *string {
+// if user chosen schedule on today/tomorrow.
+func DayScheduleToString(
+	chatID int64,
+	studyGroupId,
+	inputCallback string,
+	date time.Time,
+	schedule *model.Schedule,
+	scheduleStorage *storage.ScheduleStorage) *string {
+
 	var scheduleString string
 
 	// lessonStartTimeField is number of StartTime field in model.Lesson
@@ -39,11 +52,7 @@ func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, sch
 	// lessonNameField is number of Name field in model.Lesson.
 	lessonNameField := 0
 
-	// Adding user`s input group ID.
 	scheduleString = addGroupId(studyGroupId)
-
-	// Adding date (day, month, year) and week day of bold style
-	// by using ParseMode "markdown" in bot.go.
 	scheduleString += addDate(date)
 
 	dereferenceSchedule := *schedule
@@ -61,12 +70,6 @@ func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, sch
 			if !isFoundLessons(lessonData.Field(lessonNameField)) {
 				scheduleString += addNotFoundLessons()
 				break
-			}
-
-			if isHttpError(lessonData.Field(lessonNameField)) {
-				scheduleString = addGroupId(studyGroupId)
-				scheduleString += addHttpError()
-				return &scheduleString
 			}
 
 			scheduleString += addLessonNumber(lessonData.Field(lessonStartTimeField))
@@ -105,16 +108,23 @@ func DayScheduleToString(studyGroupId, inputCallback string, date time.Time, sch
 }
 
 // WeekScheduleToString converts schedule of type model.Schedule to string
-// if user chosen schedule on week (current week/next week).
-func WeekScheduleToString(studyGroupId, inputCallback string, dates []time.Time, schedule *model.Schedule, scheduleStorage *storage.ScheduleStorage, chatID int64) *string {
+// if user chosen schedule on week/next week.
+func WeekScheduleToString(
+	chatID int64,
+	studyGroupId,
+	inputCallback string,
+	dates []time.Time,
+	schedule *model.Schedule,
+	scheduleStorage *storage.ScheduleStorage) *string {
+
 	var scheduleString string
 
 	// index starting from 0 to 6 and necessary to go through given array of dates
 	// to add dates of every week day and name of the week day to scheduleString while converting schedule.
 	index := 0
 
-	// currentLessonNumber is number of certain lesson, will be compared with maxLessonNumber to
-	// output correct number.
+	// currentLessonNumber is number of certain lesson which will be compared with maxLessonNumber to
+	// output correct lesson number.
 	currentLessonNumber := 0
 
 	// maxLessonNumber necessary to compare current lesson number with next lesson number while converting schedule
@@ -159,17 +169,10 @@ func WeekScheduleToString(studyGroupId, inputCallback string, dates []time.Time,
 				break
 			}
 
-			if isHttpError(lessonData.Field(lessonNameField)) {
-				scheduleString = addGroupId(studyGroupId)
-				scheduleString += addHttpError()
-
-				return &scheduleString
-			}
-
 			currentLessonNumber = model.GetLessonNumber(fmt.Sprint(lessonData.Field(lessonStartTimeField).Interface()))
 
 			// comparing lesson numbers: if current lesson number is less than maxLessonNumber,
-			// than we get lessons for a new day and add date and day of the week.
+			// than we get lessons for a new day.
 			if currentLessonNumber <= maxLessonNumber {
 				scheduleString += addDates(index, dates)
 				index++
@@ -211,7 +214,6 @@ func WeekScheduleToString(studyGroupId, inputCallback string, dates []time.Time,
 	return &scheduleString
 }
 
-// addGroupId adds study group id to schedule of type string while converting schedule.
 func addGroupId(studyGroupId string) string {
 	scheduleString := "Группа: " + fmt.Sprintf("%s\n\n", studyGroupId)
 	return scheduleString
@@ -262,13 +264,6 @@ func addNotFoundLessons() string {
 	return scheduleString
 }
 
-func addHttpError() string {
-	scheduleString := "Ошибка: невозможно сделать запрос на сайт\n\n"
-	return scheduleString
-}
-
-// addDate adds utils and day of the week of certain day of bold style
-// to schedule of type string while converting schedule on day.
 func addDate(date time.Time) string {
 	scheduleString := fmt.Sprintf("*%s*", "Дата: ") +
 		fmt.Sprintf("*%s*", date.Format("02.01.2006")) +
@@ -277,8 +272,6 @@ func addDate(date time.Time) string {
 	return scheduleString
 }
 
-// addDates adds date and day of the week of certain day
-// to schedule of type string while converting schedule on week.
 func addDates(index int, dates []time.Time) string {
 	scheduleString := fmt.Sprintf("*%s*", "Дата: ") +
 		fmt.Sprintf("*%s*", dates[index].Format("02.01.2006")) +
@@ -287,20 +280,10 @@ func addDates(index int, dates []time.Time) string {
 	return scheduleString
 }
 
-// isHaveLessons returns false if we don`t have lessons for certain day
-// by checking 'Name' field in model.Lesson.
 func isHaveLessons(lessonNameField reflect.Value) bool {
 	return lessonNameField.String() != "no lessons"
 }
 
-// isFoundLessons returns false if we didn't find lessons for certain day
-// by checking 'Name' field in model.Lesson.
 func isFoundLessons(lessonNameField reflect.Value) bool {
 	return lessonNameField.String() != "not found"
-}
-
-// isHttpError returns true if we got http error while making request to university website
-// by checking 'Name' field in model.Lesson.
-func isHttpError(lessonNameField reflect.Value) bool {
-	return lessonNameField.String() == "http error"
 }

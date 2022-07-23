@@ -8,7 +8,7 @@ import (
 
 // HandleMessage
 // returns group id, url to parse schedule and error.
-// if user`s input group id not exists, then error value becomes appropriate.
+// if user`s input group id not exists, then error value becomes custom error.
 func HandleMessage(chatID int64, msgStorage *storage.MessageStorage, groupStorage *storage.GroupStorage) (string, string, error) {
 
 	studyGroupId := msgStorage.MessageData[chatID]

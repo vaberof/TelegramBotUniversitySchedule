@@ -1,6 +1,8 @@
 package unisite
 
 import (
+	"errors"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
@@ -31,7 +33,6 @@ func parseDate(date time.Time, url string) (*goquery.Selection, error) {
 
 		if everDTagValue == date.Format("02.01") {
 			dateSelection = tag
-
 			return false
 		}
 		return true
@@ -40,9 +41,9 @@ func parseDate(date time.Time, url string) (*goquery.Selection, error) {
 	return dateSelection, nil
 }
 
-// ParseDayLessons finds study group`s lessons for day that user chosen,
-// adds them to model.Schedule and returns pointer to it.
-func ParseDayLessons(inputCallback, url string, date time.Time) *model.Schedule {
+// ParseDayLessons finds study group`s lessons for day that user chosen.
+// Returns custom error if http request Timeout occurred.
+func ParseDayLessons(inputCallback, url string, date time.Time) (*model.Schedule, error) {
 
 	var (
 		startTime   string   // Начало пары
@@ -51,7 +52,7 @@ func ParseDayLessons(inputCallback, url string, date time.Time) *model.Schedule 
 		roomNumber  string   // Номер аудитории
 		teacherName string   // Имя преподавателя
 		lessonType  string   // Тип пары (лекция/практика/лабораторная)
-		lessons     []string // check if we have lesson on certain day while parsing
+		lessons     []string // necessary to check if we have lesson on certain day while parsing
 	)
 
 	daySchedule := model.NewDaySchedule()
@@ -59,15 +60,14 @@ func ParseDayLessons(inputCallback, url string, date time.Time) *model.Schedule 
 
 	dateSelection, err := parseDate(date, url)
 	if err != nil {
-		daySchedule = addHttpErrorMsg(daySchedule)
-		schedule[inputCallback] = *daySchedule
-		return &schedule
+		httpError := fmt.Sprint("Ошибка: превышено время ожидания от сервера")
+		return &schedule, errors.New(httpError)
 	}
 
 	if isNilSelection(dateSelection) {
 		daySchedule = addNotFoundLessonsMsg(daySchedule)
 		schedule[inputCallback] = *daySchedule
-		return &schedule
+		return &schedule, nil
 	}
 
 	dateSelection.Find(".one_lesson").EachWithBreak(func(index int, tag *goquery.Selection) bool {
@@ -95,16 +95,16 @@ func ParseDayLessons(inputCallback, url string, date time.Time) *model.Schedule 
 	if !isHaveLessons(lessons) {
 		daySchedule = addNoLessonsMsg(daySchedule)
 		schedule[inputCallback] = *daySchedule
-		return &schedule
+		return &schedule, nil
 	}
 
 	schedule[inputCallback] = *daySchedule
-	return &schedule
+	return &schedule, nil
 }
 
-// ParseWeekLessons finds study group`s lessons for days that user chosen,
-// adds them to model.Schedule and returns pointer to it.
-func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Schedule {
+// ParseWeekLessons finds study group`s lessons for week that user chosen.
+// Returns custom error if http request Timeout occurred.
+func ParseWeekLessons(inputCallback, url string, dates []time.Time) (*model.Schedule, error) {
 
 	var (
 		startTime   string   // Начало пары
@@ -113,7 +113,7 @@ func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Sched
 		roomNumber  string   // Номер аудитории
 		teacherName string   // Имя преподавателя
 		lessonType  string   // Тип пары (лекция/практика/лабораторная)
-		lessons     []string // check if we have lesson on certain day while parsing
+		lessons     []string // necessary to check if we have lesson on certain day while parsing
 	)
 
 	daySchedule := model.NewDaySchedule()
@@ -124,9 +124,8 @@ func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Sched
 
 		dateSelection, err := parseDate(dates[day], url)
 		if err != nil {
-			daySchedule = addHttpErrorMsg(daySchedule)
-			schedule[inputCallback] = *daySchedule
-			return &schedule
+			httpError := fmt.Sprint("Ошибка: превышено время ожидания от сервера")
+			return &schedule, errors.New(httpError)
 		}
 
 		if isNilSelection(dateSelection) {
@@ -163,7 +162,7 @@ func ParseWeekLessons(inputCallback, url string, dates []time.Time) *model.Sched
 	}
 
 	schedule[inputCallback] = *daySchedule
-	return &schedule
+	return &schedule, nil
 }
 
 func addNotFoundLessonsMsg(daySchedule *model.DaySchedule) *model.DaySchedule {
@@ -176,13 +175,6 @@ func addNotFoundLessonsMsg(daySchedule *model.DaySchedule) *model.DaySchedule {
 func addNoLessonsMsg(daySchedule *model.DaySchedule) *model.DaySchedule {
 	*daySchedule = append(*daySchedule, model.Lesson{
 		Name: "no lessons",
-	})
-	return daySchedule
-}
-
-func addHttpErrorMsg(daySchedule *model.DaySchedule) *model.DaySchedule {
-	*daySchedule = append(*daySchedule, model.Lesson{
-		Name: "http error",
 	})
 	return daySchedule
 }

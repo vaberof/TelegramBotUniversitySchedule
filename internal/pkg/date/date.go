@@ -9,13 +9,13 @@ import (
 )
 
 func GetParseDate(inputCallBack string) time.Time {
-	loc := GetDefaultLocation(constants.Location)
+	location := GetDefaultLocation(constants.Location)
 
 	switch inputCallBack {
 	case constants.Today:
-		return today(loc)
+		return today(location)
 	default:
-		return tomorrow(loc)
+		return tomorrow(location)
 	}
 }
 

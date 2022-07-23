@@ -36,8 +36,8 @@ func LoadHtmlPage(url string) (*goquery.Document, error) {
 	return document, nil
 }
 
-// makeRequest
-// returns response body of type Reader end error.
+// makeRequest returns response body of type Reader
+// and error if http request Timeout occurred or response body cannot be read.
 func makeRequest(url string) (io.Reader, error) {
 	client := http.Client{
 		Timeout: 1 * time.Second,

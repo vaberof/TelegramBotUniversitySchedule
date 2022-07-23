@@ -34,6 +34,8 @@ func (s *ScheduleStorage) SetNewExpireTime() {
 		time.UTC).In(date.GetDefaultLocation(constants.Location)).Add(24 * time.Hour)
 }
 
+// GetCachedScheduleIndex returns index array of cached schedule.
+// Returns -1 if schedule not cached.
 func GetCachedScheduleIndex(chatID int64, inputCallBack string, scheduleStorage *ScheduleStorage) int {
 	if len(scheduleStorage.Schedule[chatID]) == 0 {
 		return -1
