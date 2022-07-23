@@ -17,9 +17,21 @@ func NewScheduleStorage() *ScheduleStorage {
 		ExpireTime: time.Date(time.Now().Year(),
 			time.Now().Month(),
 			time.Now().Day(),
-			17, 0, 0, 0,
+			17, 00, 0, 0,
 			time.UTC).In(date.GetDefaultLocation(constants.Location)),
 	}
+}
+
+func (s *ScheduleStorage) ClearSchedule() {
+	s.Schedule = map[int64][]map[string]string{}
+}
+
+func (s *ScheduleStorage) SetNewExpireTime() {
+	s.ExpireTime = time.Date(time.Now().Year(),
+		time.Now().Month(),
+		time.Now().Day(),
+		17, 0, 0, 0,
+		time.UTC).In(date.GetDefaultLocation(constants.Location)).Add(24 * time.Hour)
 }
 
 func GetCachedScheduleIndex(chatID int64, inputCallBack string, scheduleStorage *ScheduleStorage) int {

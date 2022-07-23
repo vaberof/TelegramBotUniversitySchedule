@@ -8,7 +8,6 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/storage"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/integration/unisite"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/date"
-
 	"os"
 )
 
@@ -139,7 +138,8 @@ func handleMenuButtonPress(
 	currentTime := date.GetCurrentTime()
 
 	if storage.TimeExpired(currentTime, scheduleStorage) {
-		scheduleStorage = storage.NewScheduleStorage()
+		scheduleStorage.ClearSchedule()
+		scheduleStorage.SetNewExpireTime()
 
 		log.WithFields(log.Fields{
 			"current time": currentTime,
