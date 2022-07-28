@@ -2,8 +2,8 @@
 
 This bot finds schedule for ssugt students
 
-*Note:* unavailable for use in summer
+## Link
 
-## Link 
-  
-    https://t.me/ssugt_timetable_bot
+[TelegramBot](https://t.me/ssugt_timetable_bot)
+
+*Note:* unavailable for use in summer
