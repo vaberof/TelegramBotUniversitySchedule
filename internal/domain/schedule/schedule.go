@@ -1,30 +1,17 @@
-package model
+package domain
 
-type Schedule map[string]DaySchedule
-type DaySchedule []Lesson
+type Date string
+
+type Schedule = map[Date]DaySchedule
+type DaySchedule []*Lesson
 
 type Lesson struct {
-	Name            string
+	Title           string
 	StartTime       string
 	FinishTime      string
 	Type            string
-	Room            string
+	RoomId          string
 	TeacherFullName string
-}
-
-func NewDaySchedule() *DaySchedule {
-	return &DaySchedule{}
-}
-
-func (d *DaySchedule) AddLessons(lessonName, startTime, finishTime, lessonType, roomNumber, teacherName string) {
-	*d = append(*d, Lesson{
-		lessonName,
-		startTime,
-		finishTime,
-		lessonType,
-		roomNumber,
-		teacherName,
-	})
 }
 
 // GetLessonNumber checks time when lesson starts

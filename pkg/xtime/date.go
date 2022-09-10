@@ -1,31 +1,31 @@
-package date
+package xtime
 
 import (
 	log "github.com/sirupsen/logrus"
-	"time"
-
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/constants"
+	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtimezone"
 	"github.com/vaberof/goweekdate"
+	"time"
 )
 
-func GetParseDate(inputCallBack string) time.Time {
-	location := GetDefaultLocation(constants.Location)
+func GetDateToParse(inputDateTelegramButton string) time.Time {
+	location := GetDefaultLocation(xtimezone.Novosibirsk)
 
-	switch inputCallBack {
-	case constants.Today:
+	switch inputDateTelegramButton {
+	case Today:
 		return today(location)
 	default:
 		return tomorrow(location)
 	}
 }
 
-func GetParseDates(inputCallBack string) []time.Time {
-	switch inputCallBack {
-	case constants.Week:
+func GetDatesToParse(inputDateTelegramButton string) []time.Time {
+	switch inputDateTelegramButton {
+	case Week:
 		return week()
-	default:
+	case NextWeek:
 		return nextWeek()
 	}
+	return nil
 }
 
 func today(location *time.Location) time.Time {
@@ -39,14 +39,14 @@ func tomorrow(location *time.Location) time.Time {
 }
 
 func week() []time.Time {
-	wd := weekdate.New(time.Now(), constants.Location)
+	wd := weekdate.New(time.Now(), xtimezone.Novosibirsk)
 
 	Dates := wd.Dates(1, true)
 	return Dates
 }
 
 func nextWeek() []time.Time {
-	wd := weekdate.New(time.Now(), constants.Location)
+	wd := weekdate.New(time.Now(), xtimezone.Novosibirsk)
 
 	Dates := wd.Dates(2, false)
 	return Dates
@@ -66,5 +66,5 @@ func GetDefaultLocation(location string) *time.Location {
 }
 
 func GetCurrentTime() time.Time {
-	return time.Now().In(GetDefaultLocation(constants.Location))
+	return time.Now().In(GetDefaultLocation(xtimezone.Novosibirsk))
 }
