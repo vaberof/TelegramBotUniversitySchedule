@@ -29,25 +29,20 @@ func (s *ScheduleService) GetSchedule(groupId string, from time.Time, to time.Ti
 }
 
 func (s *ScheduleService) getScheduleImpl(groupId string, from time.Time, to time.Time) (*Schedule, error) {
-	studyGroup := s.groupStorageApi.GetStudyGroup(groupId)
-	if studyGroup == nil {
+	studyGroupQueryParams := s.groupStorageApi.GetStudyGroupQueryParams(groupId)
+	if studyGroupQueryParams == nil {
 		return nil, errors.New(fmt.Sprintf("Группы '%s' не существует", groupId))
 	}
-	log.Printf("group name: %s, query params: %s", studyGroup.Id+"-"+studyGroup.Name, studyGroup.ExternalId)
+	log.Printf("group name: %s, query params: %s", groupId, *studyGroupQueryParams)
 
 	cachedLessons, err := s.scheduleStorageApi.GetCachedLessons(groupId, from, to)
 	if cachedLessons == nil || err != nil {
-		getScheduleResponse, err := s.callScheduleApi(studyGroup, from, to)
+		getScheduleResponse, err := s.callScheduleApi(*studyGroupQueryParams, from, to)
 		if err != nil {
 			return nil, err
 		}
 
-		storageLessons, err := s.respLessonsToStorage(getScheduleResponse.Lessons)
-		if err != nil {
-			return nil, err
-		}
-
-		err = s.scheduleStorageApi.SaveLessons(groupId, from, to, storageLessons)
+		err = s.cacheLessons(groupId, getScheduleResponse.Lessons, from, to)
 		if err != nil {
 			return nil, err
 		}
@@ -68,8 +63,22 @@ func (s *ScheduleService) getScheduleImpl(groupId string, from time.Time, to tim
 	return schedule, nil
 }
 
-func (s *ScheduleService) callScheduleApi(studyGroup *storage.Group, from time.Time, to time.Time) (*integration.GetScheduleResponse, error) {
-	getScheduleResponse, err := s.callApi(s.httpClient, studyGroup, from, to)
+func (s *ScheduleService) cacheLessons(groupId string, lessons []*integration.Lesson, from time.Time, to time.Time) error {
+	storageLessons, err := s.respLessonsToStorage(lessons)
+	if err != nil {
+		return err
+	}
+
+	err = s.scheduleStorageApi.SaveLessons(groupId, from, to, storageLessons)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *ScheduleService) callScheduleApi(studyGroupQueryParams string, from time.Time, to time.Time) (*integration.GetScheduleResponse, error) {
+	getScheduleResponse, err := s.callApi(s.httpClient, studyGroupQueryParams, from, to)
 	log.Printf("schedule response from scheduleApi: %v", getScheduleResponse)
 	if err != nil {
 		return nil, err
@@ -78,8 +87,8 @@ func (s *ScheduleService) callScheduleApi(studyGroup *storage.Group, from time.T
 	return getScheduleResponse, nil
 }
 
-func (s *ScheduleService) callApi(scheduleApi integration.ScheduleApi, studyGroup *storage.Group, from time.Time, to time.Time) (*integration.GetScheduleResponse, error) {
-	return scheduleApi.GetSchedule(studyGroup, from, to)
+func (s *ScheduleService) callApi(scheduleApi integration.ScheduleApi, studyGroupQueryParams string, from time.Time, to time.Time) (*integration.GetScheduleResponse, error) {
+	return scheduleApi.GetSchedule(studyGroupQueryParams, from, to)
 }
 
 func (s *ScheduleService) respScheduleToDomain(getScheduleResponse *integration.GetScheduleResponse, from time.Time, to time.Time) (*Schedule, error) {

@@ -6,7 +6,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xstrconv"
 	"io"
 	"strings"
@@ -14,7 +13,7 @@ import (
 )
 
 type ScheduleApi interface {
-	GetSchedule(group *storage.Group, from time.Time, to time.Time) (*GetScheduleResponse, error)
+	GetSchedule(studyGroupQueryParams string, from time.Time, to time.Time) (*GetScheduleResponse, error)
 }
 
 type GetScheduleResponse struct {
@@ -41,12 +40,12 @@ type Lesson struct {
 	TeacherFullName string
 }
 
-func (httpClient *HttpClient) GetSchedule(group *storage.Group, from time.Time, to time.Time) (*GetScheduleResponse, error) {
-	return httpClient.getScheduleResponse(group, from, to)
+func (httpClient *HttpClient) GetSchedule(studyGroupQueryParams string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
+	return httpClient.getScheduleResponse(studyGroupQueryParams, from, to)
 }
 
-func (httpClient *HttpClient) getScheduleResponse(group *storage.Group, from time.Time, to time.Time) (*GetScheduleResponse, error) {
-	htmlTemplate, err := httpClient.getHtmlTemplate(group.ExternalId)
+func (httpClient *HttpClient) getScheduleResponse(studyGroupQueryParams string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
+	htmlTemplate, err := httpClient.getHtmlTemplate(studyGroupQueryParams)
 	if err != nil {
 		return nil, err
 	}
@@ -158,8 +157,8 @@ func (httpClient *HttpClient) parseDateSelection(
 	})
 }
 
-func (httpClient *HttpClient) getHtmlTemplate(queryParams string) (*goquery.Document, error) {
-	response, err := httpClient.makeRequest(queryParams)
+func (httpClient *HttpClient) getHtmlTemplate(studyGroupQueryParams string) (*goquery.Document, error) {
+	response, err := httpClient.makeRequest(studyGroupQueryParams)
 	if err != nil {
 		//httpError := fmt.Sprint("Ошибка: превышено время ожидания от сервера")
 		return nil, err
@@ -179,8 +178,8 @@ func (httpClient *HttpClient) getHtmlTemplate(queryParams string) (*goquery.Docu
 	return htmlTemplate, nil
 }
 
-func (httpClient *HttpClient) makeRequest(queryParams string) (*resty.Response, error) {
-	response, err := httpClient.client.R().Get(httpClient.host + queryParams)
+func (httpClient *HttpClient) makeRequest(studyGroupQueryParams string) (*resty.Response, error) {
+	response, err := httpClient.client.R().Get(httpClient.host + studyGroupQueryParams)
 	if err != nil {
 		return nil, err
 	}

@@ -3,7 +3,7 @@ package domain
 import "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage"
 
 type GroupStorageApi interface {
-	GetStudyGroup(groupId string) *storage.Group
+	GetStudyGroupQueryParams(groupId string) *string
 }
 
 type GroupStorage struct {

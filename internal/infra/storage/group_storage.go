@@ -27,12 +27,11 @@ func NewGroupStorage() *GroupStorage {
 	}
 }
 
-// GetStudyGroup gets study group object.
-func (g *GroupStorage) GetStudyGroup(groupId string) *Group {
+func (g *GroupStorage) GetStudyGroupQueryParams(groupId string) *string {
 	for i := 0; i < len(g.Groups); i++ {
 		group := *g.Groups[i]
 		if group.Id+"-"+group.Name == groupId {
-			return &group
+			return &group.ExternalId
 		}
 	}
 	return nil
