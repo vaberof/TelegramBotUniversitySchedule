@@ -7,10 +7,12 @@ import (
 
 type HttpClient struct {
 	client *resty.Client
+	host   string
 }
 
-func NewHttpClient(cfg *configs.HttpClientConfig) *HttpClient {
+func NewHttpClient(host string, config *configs.HttpClientConfig) *HttpClient {
 	return &HttpClient{
-		client: resty.New().SetTimeout(cfg.Timeout),
+		host:   host,
+		client: resty.New().SetTimeout(config.Timeout),
 	}
 }

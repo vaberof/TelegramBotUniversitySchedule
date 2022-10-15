@@ -5,5 +5,5 @@ const (
 	Tomorrow        = "Tomorrow"
 
 	Week     = "Week"
-	NextWeek = "Next week"
+	NextWeek = "Next GetWeekDatesRange"
 )

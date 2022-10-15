@@ -8,44 +8,42 @@ import (
 )
 
 func GetDateToParse(inputDateTelegramButton string) time.Time {
-	location := GetDefaultLocation(xtimezone.Novosibirsk)
-
+	Novosibirsk := GetDefaultLocation(xtimezone.Novosibirsk)
 	switch inputDateTelegramButton {
 	case Today:
-		return today(location)
+		return GetTodayDate(Novosibirsk)
 	default:
-		return tomorrow(location)
+		return GetTomorrowDate(Novosibirsk)
 	}
 }
 
 func GetDatesToParse(inputDateTelegramButton string) []time.Time {
 	switch inputDateTelegramButton {
 	case Week:
-		return week()
-	case NextWeek:
-		return nextWeek()
+		return GetWeekDatesRange()
+	default:
+		return GetNextWeekDatesRange()
 	}
-	return nil
 }
 
-func today(location *time.Location) time.Time {
+func GetTodayDate(location *time.Location) time.Time {
 	todayDate := time.Now().In(location)
 	return todayDate
 }
 
-func tomorrow(location *time.Location) time.Time {
+func GetTomorrowDate(location *time.Location) time.Time {
 	tomorrowDate := time.Now().Add(time.Hour * 24).In(location)
 	return tomorrowDate
 }
 
-func week() []time.Time {
+func GetWeekDatesRange() []time.Time {
 	wd := weekdate.New(time.Now(), xtimezone.Novosibirsk)
 
 	Dates := wd.Dates(1, true)
 	return Dates
 }
 
-func nextWeek() []time.Time {
+func GetNextWeekDatesRange() []time.Time {
 	wd := weekdate.New(time.Now(), xtimezone.Novosibirsk)
 
 	Dates := wd.Dates(2, false)
@@ -61,10 +59,5 @@ func GetDefaultLocation(location string) *time.Location {
 			"func":     "GetDefaultLocation",
 		}).Fatal("Failed to load a location")
 	}
-
 	return loc
-}
-
-func GetCurrentTime() time.Time {
-	return time.Now().In(GetDefaultLocation(xtimezone.Novosibirsk))
 }

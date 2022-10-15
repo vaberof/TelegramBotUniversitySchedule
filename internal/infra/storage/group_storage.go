@@ -1,24 +1,39 @@
 package storage
 
-type StudyGroupId string
-type StudyGroupUrl string
-
 type GroupStorage struct {
-	groupStorage map[StudyGroupId]StudyGroupUrl
+	Groups []*Group
+}
+
+type Group struct {
+	Id         string
+	Name       string
+	ExternalId string
 }
 
 func NewGroupStorage() *GroupStorage {
 	return &GroupStorage{
-		groupStorage: map[StudyGroupId]StudyGroupUrl{
-			"БИ-21.1": "https://rasp.sgugit.ru/?ii=1&fi=1&c=2&gn=37&",
-			"БИ-21.2": "https://rasp.sgugit.ru/?ii=1&fi=1&c=2&gn=38&",
+		Groups: []*Group{
+			{
+				Id:         "БИ",
+				Name:       "21.1",
+				ExternalId: "?ii=1&fi=1&c=2&gn=37&",
+			},
+			{
+				Id:         "БИ",
+				Name:       "21.2",
+				ExternalId: "?ii=1&fi=1&c=2&gn=38&",
+			},
 		},
 	}
 }
 
-// GetStudyGroupUrl gets study group`s url
-func (g *GroupStorage) GetStudyGroupUrl(studyGroupId string) *string {
-	url := g.groupStorage[StudyGroupId(studyGroupId)]
-	stringUrl := string(url)
-	return &stringUrl
+// GetStudyGroup gets study group object.
+func (g *GroupStorage) GetStudyGroup(groupId string) *Group {
+	for i := 0; i < len(g.Groups); i++ {
+		group := *g.Groups[i]
+		if group.Id+"-"+group.Name == groupId {
+			return &group
+		}
+	}
+	return nil
 }

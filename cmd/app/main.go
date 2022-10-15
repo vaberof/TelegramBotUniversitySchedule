@@ -6,7 +6,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/vaberof/TelegramBotUniversitySchedule/configs"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/entrypoint/telegram"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
+	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
 	"os"
+	"time"
 )
 
 func main() {
@@ -26,21 +29,28 @@ func main() {
 
 	updates := bot.GetUpdatesChan(botUpdatesChannel)
 
-	// httpCfg := configs.NewHttpClientConfig(1 * time.Second)
-	// httpClient := integration.NewHttpClient(httpCfg)
+	host := os.Getenv("host")
+	httpClientConfig := configs.NewHttpClientConfig(3 * time.Second)
+	httpClient := integration.NewHttpClient(host, httpClientConfig)
 
-	var inputMessage *telegram.InputMessage
+	scheduleStorage := domain.NewScheduleStorage()
+	groupStorage := domain.NewGroupStorage()
+
+	scheduleService := domain.NewScheduleService(scheduleStorage, groupStorage, httpClient)
+	telegramHandler := telegram.NewTelegramHandler(scheduleService)
+
+	var inputMessage *telegram.InputTelegramMessage
 
 	for update := range updates {
-		if telegram.MessageReceived(update) {
-			inputMessage = telegram.HandleNewMessage(bot, update, *botKeyboardMarkup)
-		} else if telegram.MenuButtonPressed(update) {
-			telegram.HandleMenuButtonPress(bot, update, inputMessage, *botKeyboardMarkup)
-		} else if telegram.CommandReceived(update) {
-			telegram.HandleCommandMessage(bot, update)
+		if telegramHandler.CommandReceived(update) {
+			telegramHandler.HandleCommandMessage(bot, update)
+			continue
+		} else if telegramHandler.MessageReceived(update) {
+			inputMessage = telegramHandler.HandleNewMessage(bot, update, *botKeyboardMarkup)
+		} else if telegramHandler.MenuButtonPressed(update) {
+			telegramHandler.HandleMenuButtonPress(bot, update, inputMessage, *botKeyboardMarkup)
 		}
 	}
-
 }
 
 // newBot creates bot.
@@ -67,10 +77,10 @@ func newBotKeyboardMarkup() *tgbotapi.InlineKeyboardMarkup {
 			tgbotapi.NewInlineKeyboardButtonData("Сегодня", "Today"),
 			tgbotapi.NewInlineKeyboardButtonData("Завтра", "Tomorrow"),
 		),
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Неделя", "Week"),
-			tgbotapi.NewInlineKeyboardButtonData("След. неделя", "Next week"),
-		),
+		//tgbotapi.NewInlineKeyboardRow(
+		//	tgbotapi.NewInlineKeyboardButtonData("Неделя", "Week"),
+		//	tgbotapi.NewInlineKeyboardButtonData("След. неделя", "Next week"),
+		//),
 	)
 
 	return &botKeyboardMarkup
