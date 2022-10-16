@@ -77,10 +77,10 @@ func newBotKeyboardMarkup() *tgbotapi.InlineKeyboardMarkup {
 			tgbotapi.NewInlineKeyboardButtonData("Сегодня", "Today"),
 			tgbotapi.NewInlineKeyboardButtonData("Завтра", "Tomorrow"),
 		),
-		//tgbotapi.NewInlineKeyboardRow(
-		//	tgbotapi.NewInlineKeyboardButtonData("Неделя", "Week"),
-		//	tgbotapi.NewInlineKeyboardButtonData("След. неделя", "Next week"),
-		//),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Неделя", "Week"),
+			tgbotapi.NewInlineKeyboardButtonData("След. неделя", "Next week"),
+		),
 	)
 
 	return &botKeyboardMarkup

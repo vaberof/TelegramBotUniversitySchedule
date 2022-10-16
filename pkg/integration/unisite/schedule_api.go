@@ -101,8 +101,7 @@ func (httpClient *HttpClient) parseWeekLessons(htmlDocument *goquery.Document, f
 		if err != nil {
 			return nil, err
 		}
-
-		from.Add(24 * time.Hour)
+		from = from.Add(24 * time.Hour)
 
 		if httpClient.isNilSelection(dateSelection) {
 			getScheduleResponse = *addNotFoundLessonsMsg(&getScheduleResponse)
@@ -113,8 +112,10 @@ func (httpClient *HttpClient) parseWeekLessons(htmlDocument *goquery.Document, f
 
 		if len(lessons) == 0 {
 			getScheduleResponse = *addNoLessonsMsg(&getScheduleResponse)
+			getScheduleResponse = *addNextDayMsg(&getScheduleResponse)
 			continue
 		}
+		getScheduleResponse = *addNextDayMsg(&getScheduleResponse)
 	}
 
 	return &getScheduleResponse, nil
@@ -181,7 +182,8 @@ func (httpClient *HttpClient) getHtmlTemplate(studyGroupQueryParams string) (*go
 func (httpClient *HttpClient) makeRequest(studyGroupQueryParams string) (*resty.Response, error) {
 	response, err := httpClient.client.R().Get(httpClient.host + studyGroupQueryParams)
 	if err != nil {
-		return nil, err
+		log.Println(err.Error())
+		return nil, errors.New("Ошибка: превышено время ожидания от сервера")
 	}
 	return response, nil
 }
@@ -243,6 +245,13 @@ func addNotFoundLessonsMsg(scheduleResponse *GetScheduleResponse) *GetScheduleRe
 func addNoLessonsMsg(scheduleResponse *GetScheduleResponse) *GetScheduleResponse {
 	scheduleResponse.Lessons = append(scheduleResponse.Lessons, &Lesson{
 		Title: "no lessons",
+	})
+	return scheduleResponse
+}
+
+func addNextDayMsg(scheduleResponse *GetScheduleResponse) *GetScheduleResponse {
+	scheduleResponse.Lessons = append(scheduleResponse.Lessons, &Lesson{
+		Title: "next day",
 	})
 	return scheduleResponse
 }

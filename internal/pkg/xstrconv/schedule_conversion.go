@@ -6,11 +6,10 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/i18n"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtime"
 	"strconv"
+	"strings"
 	"time"
 )
 
-// ScheduleToString converts schedule of type model.Schedule to string type
-// to output it to user.
 func ScheduleToString(groupId string, inputTelegramButtonDate string, schedule *domain.Schedule) *string {
 	switch inputTelegramButtonDate {
 	case xtime.Today, xtime.Tomorrow:
@@ -22,8 +21,6 @@ func ScheduleToString(groupId string, inputTelegramButtonDate string, schedule *
 	}
 }
 
-// DayScheduleToString converts schedule of type model.Schedule to string
-// if user chosen schedule on today/tomorrow.
 func DayScheduleToString(
 	groupId string,
 	inputTelegramButtonDate string,
@@ -60,8 +57,6 @@ func DayScheduleToString(
 	return &strSchedule
 }
 
-// WeekScheduleToString converts schedule of type model.Schedule to string
-// if user chosen schedule on week/next week.
 func WeekScheduleToString(
 	groupId string,
 	inputTelegramButtonDate string,
@@ -73,47 +68,32 @@ func WeekScheduleToString(
 	scheduleDate := domain.Date(inputTelegramButtonDate)
 
 	strSchedule = addGroupId(groupId)
+	strSchedule += addDate(dates[0])
+	day := 1
 
 	dereferenceSchedule := *schedule
 
 	daySchedule := dereferenceSchedule[scheduleDate]
 	dereferenceDaySchedule := *daySchedule
 
-	lessonNumber := 10
-	dateIndex := 0
-
 	for i := 0; i < len(dereferenceDaySchedule); i++ {
 		lesson := dereferenceDaySchedule[i]
+		lessonTitle := lesson.Title
 
-		currLessonNumber := domain.GetLessonNumber(lesson.StartTime)
-		if currLessonNumber <= lessonNumber {
-			strSchedule += addDate(dates[dateIndex])
-			dateIndex++
-		}
-
-		if !isHaveLessons(lesson.Title) {
-			strSchedule += addNoLessons()
-			lessonNumber = 10
+		if !isHaveLessonsWhileWeekConvert(&strSchedule, lessonTitle, &day, dates) {
 			continue
 		}
 
-		if !isFoundLessons(lesson.Title) {
-			strSchedule += addNotFoundLessons()
-			lessonNumber = 10
+		if !isFoundLessonsWhileWeekConvert(&strSchedule, lessonTitle, &day, dates) {
 			continue
 		}
 
-		strSchedule += addLessonNumber(lesson.StartTime)
-		strSchedule += addLessonName(lesson.Title)
-		strSchedule += addLessonStartTime(lesson.StartTime)
-		strSchedule += addLessonFinishTime(lesson.FinishTime)
-		strSchedule += addLessonType(lesson.Type)
-		strSchedule += addLessonRoom(lesson.RoomId)
-		strSchedule += addLessonTeacherFullName(lesson.TeacherFullName)
+		if isNextDayWhileWeekConvert(&strSchedule, lessonTitle, &day, dates) {
+			continue
+		}
 
-		lessonNumber = 10
+		strSchedule = *addLessonDataToStrSchedule(strSchedule, lesson)
 	}
-
 	return &strSchedule
 }
 
@@ -186,10 +166,47 @@ func addDate(date time.Time) string {
 	return strSchedule
 }
 
-func isHaveLessons(lessonNameField string) bool {
-	return lessonNameField != "no lessons"
+func isHaveLessons(lessonTitleField string) bool {
+	return !strings.Contains(lessonTitleField, "no lessons")
 }
 
-func isFoundLessons(lessonNameField string) bool {
-	return lessonNameField != "not found"
+func isFoundLessons(lessonTitleField string) bool {
+	return !strings.Contains(lessonTitleField, "not found")
+}
+
+func isNextDay(lessonTitleField string) bool {
+	return strings.Contains(lessonTitleField, "next day")
+}
+
+func isHaveLessonsWhileWeekConvert(strSchedule *string, lessonTitle string, day *int, dates []time.Time) bool {
+	if !isHaveLessons(lessonTitle) {
+		*strSchedule += addNoLessons()
+		if isNextDay(lessonTitle) {
+			*strSchedule += addDate(dates[*day])
+			*day++
+		}
+		return false
+	}
+	return true
+}
+
+func isFoundLessonsWhileWeekConvert(strSchedule *string, lessonTitle string, day *int, dates []time.Time) bool {
+	if !isFoundLessons(lessonTitle) {
+		*strSchedule += addNotFoundLessons()
+		if isNextDay(lessonTitle) {
+			*strSchedule += addDate(dates[*day])
+			*day++
+		}
+		return false
+	}
+	return true
+}
+
+func isNextDayWhileWeekConvert(strSchedule *string, lessonTitle string, day *int, dates []time.Time) bool {
+	if isNextDay(lessonTitle) {
+		*strSchedule += addDate(dates[*day])
+		*day++
+		return true
+	}
+	return false
 }
