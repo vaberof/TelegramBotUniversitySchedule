@@ -3,8 +3,8 @@ package storage
 import (
 	"errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xstrconv"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtime"
+	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtimeconv"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtimezone"
 	"time"
 )
@@ -37,12 +37,12 @@ func NewScheduleStorage() *ScheduleStorage {
 }
 
 func (s *ScheduleStorage) GetCachedLessons(groupId string, from time.Time, to time.Time) ([]*Lesson, error) {
-	date, err := xstrconv.ConvertDateToStr(from, to)
+	dateString, err := xtimeconv.FromTimeToString(from, to)
 	if err != nil {
 		return nil, err
 	}
 
-	schedule := s.Schedule[GroupId(groupId)][Date(date)]
+	schedule := s.Schedule[GroupId(groupId)][Date(dateString)]
 	if schedule == nil {
 		return nil, errors.New("schedule not cached yet")
 	}
@@ -57,7 +57,7 @@ func (s *ScheduleStorage) GetCachedLessons(groupId string, from time.Time, to ti
 }
 
 func (s *ScheduleStorage) SaveLessons(groupId string, from time.Time, to time.Time, lessons []*Lesson) error {
-	date, err := xstrconv.ConvertDateToStr(from, to)
+	dateString, err := xtimeconv.FromTimeToString(from, to)
 	if err != nil {
 		return err
 	}
@@ -76,25 +76,34 @@ func (s *ScheduleStorage) SaveLessons(groupId string, from time.Time, to time.Ti
 		s.Schedule[GroupId(groupId)] = make(map[Date]*Schedule)
 	}
 
-	s.Schedule[GroupId(groupId)][Date(date)] = &schedule
+	s.Schedule[GroupId(groupId)][Date(dateString)] = &schedule
 	return nil
 }
 
 func (s *ScheduleStorage) setExpireTime(schedule *Schedule, from time.Time, to time.Time) error {
-	date, err := xstrconv.ConvertDateToStr(from, to)
+	dateString, err := xtimeconv.FromTimeToString(from, to)
 	if err != nil {
 		return err
 	}
 
-	Novosibirsk := xtime.GetDefaultLocation(xtimezone.Novosibirsk)
-	switch date {
+	novosibirsk, err := xtime.GetDefaultLocation(xtimezone.Novosibirsk)
+	if err != nil {
+		return err
+	}
+
+	s.setExpireTimeImpl(dateString, schedule, to, novosibirsk)
+
+	return nil
+}
+
+func (s *ScheduleStorage) setExpireTimeImpl(dateString string, schedule *Schedule, to time.Time, location *time.Location) {
+	switch dateString {
 	case "Today", "Tomorrow":
 		schedule.ExpireTime = time.Date(time.Now().Year(),
 			time.Now().Month(),
 			time.Now().Day(),
 			17, 00, 0, 0,
-			time.UTC).In(Novosibirsk)
-		return nil
+			time.UTC).In(location)
 	default:
 		// in case when schedule is needed to current week or next week
 		// 'to' is equals to sunday
@@ -103,15 +112,17 @@ func (s *ScheduleStorage) setExpireTime(schedule *Schedule, from time.Time, to t
 			time.Now().Month(),
 			time.Now().Day(),
 			17, 00, 0, 0,
-			time.UTC).In(Novosibirsk)
-		return nil
+			time.UTC).In(location)
 	}
 }
 
 func (s *ScheduleStorage) isScheduleOutdated(schedule *Schedule) error {
-	Novosibirsk := xtime.GetDefaultLocation(xtimezone.Novosibirsk)
+	novosibirsk, err := xtime.GetDefaultLocation(xtimezone.Novosibirsk)
+	if err != nil {
+		return err
+	}
 
-	currentTime := time.Now().In(Novosibirsk)
+	currentTime := time.Now().In(novosibirsk)
 	if currentTime.Format("02.01") == schedule.ExpireTime.Format("02.01") {
 		log.Printf("schedule expired: %s\n", schedule.ExpireTime.Format("02.01"))
 		return errors.New("schedule is outdated")

@@ -6,7 +6,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xstrconv"
+	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtimeconv"
 	"io"
 	"strings"
 	"time"
@@ -45,25 +45,25 @@ func (httpClient *HttpClient) GetSchedule(studyGroupQueryParams string, from tim
 }
 
 func (httpClient *HttpClient) getScheduleResponse(studyGroupQueryParams string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
-	htmlTemplate, err := httpClient.getHtmlTemplate(studyGroupQueryParams)
+	htmlDocument, err := httpClient.getHtmlDocument(studyGroupQueryParams)
 	if err != nil {
 		return nil, err
 	}
 
-	return httpClient.parseLessons(htmlTemplate, from, to)
+	return httpClient.parseLessons(htmlDocument, from, to)
 }
 
-func (httpClient *HttpClient) parseLessons(htmlTemplate *goquery.Document, from time.Time, to time.Time) (*GetScheduleResponse, error) {
-	strDate, err := xstrconv.ConvertDateToStr(from, to)
+func (httpClient *HttpClient) parseLessons(htmlDocument *goquery.Document, from time.Time, to time.Time) (*GetScheduleResponse, error) {
+	dateString, err := xtimeconv.FromTimeToString(from, to)
 	if err != nil {
 		return nil, err
 	}
 
-	switch strDate {
+	switch dateString {
 	case "Today", "Tomorrow":
-		return httpClient.parseDayLessons(htmlTemplate, to)
+		return httpClient.parseDayLessons(htmlDocument, to)
 	default:
-		return httpClient.parseWeekLessons(htmlTemplate, from)
+		return httpClient.parseWeekLessons(htmlDocument, from)
 	}
 }
 
@@ -158,7 +158,7 @@ func (httpClient *HttpClient) parseDateSelection(
 	})
 }
 
-func (httpClient *HttpClient) getHtmlTemplate(studyGroupQueryParams string) (*goquery.Document, error) {
+func (httpClient *HttpClient) getHtmlDocument(studyGroupQueryParams string) (*goquery.Document, error) {
 	response, err := httpClient.makeRequest(studyGroupQueryParams)
 	if err != nil {
 		//httpError := fmt.Sprint("Ошибка: превышено время ожидания от сервера")
@@ -171,12 +171,12 @@ func (httpClient *HttpClient) getHtmlTemplate(studyGroupQueryParams string) (*go
 		return nil, err
 	}
 
-	htmlTemplate, err := httpClient.createHtmlTemplate(responseBody)
+	htmlDocument, err := httpClient.createHtmlDocument(responseBody)
 	if err != nil {
 		return nil, err
 	}
 
-	return htmlTemplate, nil
+	return htmlDocument, nil
 }
 
 func (httpClient *HttpClient) makeRequest(studyGroupQueryParams string) (*resty.Response, error) {
@@ -197,13 +197,13 @@ func (httpClient *HttpClient) getResponseBody(response *resty.Response) (io.Read
 	return rBody, nil
 }
 
-func (httpClient *HttpClient) createHtmlTemplate(responseBody io.Reader) (*goquery.Document, error) {
+func (httpClient *HttpClient) createHtmlDocument(responseBody io.Reader) (*goquery.Document, error) {
 	document, err := goquery.NewDocumentFromReader(responseBody)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"responseBody": responseBody,
 			"error":        err,
-			"func":         "createHtmlTemplate",
+			"func":         "createHtmlDocument",
 		}).Error("Data cannot be parsed as html")
 
 		return nil, err

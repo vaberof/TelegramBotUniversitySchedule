@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage"
 	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
-	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xstrconv"
+	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtimeconv"
 	"time"
 )
 
@@ -94,14 +94,14 @@ func (s *ScheduleService) callApi(scheduleApi integration.ScheduleApi, studyGrou
 func (s *ScheduleService) respScheduleToDomain(getScheduleResponse *integration.GetScheduleResponse, from time.Time, to time.Time) (*Schedule, error) {
 	daySchedule := s.respLessonsToDomain(getScheduleResponse.Lessons)
 
-	strDate, err := xstrconv.ConvertDateToStr(from, to)
+	dateString, err := xtimeconv.FromTimeToString(from, to)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("strDate in service: %v\n", strDate)
+	log.Printf("dateString in service: %v\n", dateString)
 
 	schedule := make(Schedule)
-	schedule[Date(strDate)] = daySchedule
+	schedule[Date(dateString)] = daySchedule
 
 	return &schedule, nil
 }
@@ -161,7 +161,7 @@ func (s *ScheduleService) storageLessonsToDomain(storageLessons []*storage.Lesso
 		daySchedule = append(daySchedule, lesson)
 	}
 
-	strDate, err := xstrconv.ConvertDateToStr(from, to)
+	strDate, err := xtimeconv.FromTimeToString(from, to)
 	if err != nil {
 		return nil, err
 	}

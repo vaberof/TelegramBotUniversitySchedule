@@ -10,29 +10,39 @@ import (
 	"time"
 )
 
-func ScheduleToString(groupId string, inputTelegramButtonDate string, schedule *domain.Schedule) *string {
+func ScheduleToString(groupId string, inputTelegramButtonDate string, schedule *domain.Schedule) (*string, error) {
+	return getScheduleString(groupId, inputTelegramButtonDate, schedule)
+}
+
+func getScheduleString(groupId string, inputTelegramButtonDate string, schedule *domain.Schedule) (*string, error) {
 	switch inputTelegramButtonDate {
 	case xtime.Today, xtime.Tomorrow:
-		date := xtime.GetDateToParse(inputTelegramButtonDate)
-		return DayScheduleToString(groupId, inputTelegramButtonDate, date, schedule)
+		date, err := xtime.GetDate(inputTelegramButtonDate)
+		if err != nil {
+			return nil, err
+		}
+		return dayScheduleToString(groupId, inputTelegramButtonDate, date, schedule), nil
 	default:
-		dates := xtime.GetDatesToParse(inputTelegramButtonDate)
-		return WeekScheduleToString(groupId, inputTelegramButtonDate, dates, schedule)
+		datesRange, err := xtime.GetDatesRange(inputTelegramButtonDate)
+		if err != nil {
+			return nil, err
+		}
+		return weekScheduleToString(groupId, inputTelegramButtonDate, datesRange, schedule), nil
 	}
 }
 
-func DayScheduleToString(
+func dayScheduleToString(
 	groupId string,
 	inputTelegramButtonDate string,
 	date time.Time,
 	schedule *domain.Schedule) *string {
 
-	var strSchedule string
+	var scheduleString string
 
 	scheduleDate := domain.Date(inputTelegramButtonDate)
 
-	strSchedule = addGroupId(groupId)
-	strSchedule += addDate(date)
+	scheduleString = addGroupId(groupId)
+	scheduleString += addDate(date)
 
 	dereferenceSchedule := *schedule
 
@@ -42,33 +52,31 @@ func DayScheduleToString(
 	for i := 0; i < len(dereferenceDaySchedule); i++ {
 		lesson := dereferenceDaySchedule[i]
 		if !isHaveLessons(lesson.Title) {
-			strSchedule += addNoLessons()
+			scheduleString += addNoLessons()
 			break
 		}
 
 		if !isFoundLessons(lesson.Title) {
-			strSchedule += addNotFoundLessons()
+			scheduleString += addNotFoundLessons()
 			break
 		}
-
-		strSchedule = *addLessonDataToStrSchedule(strSchedule, lesson)
+		scheduleString = *addLessonToScheduleString(scheduleString, lesson)
 	}
-
-	return &strSchedule
+	return &scheduleString
 }
 
-func WeekScheduleToString(
+func weekScheduleToString(
 	groupId string,
 	inputTelegramButtonDate string,
-	dates []time.Time,
+	datesRange []time.Time,
 	schedule *domain.Schedule) *string {
 
-	var strSchedule string
+	var scheduleString string
 
 	scheduleDate := domain.Date(inputTelegramButtonDate)
 
-	strSchedule = addGroupId(groupId)
-	strSchedule += addDate(dates[0])
+	scheduleString = addGroupId(groupId)
+	scheduleString += addDate(datesRange[0])
 	day := 1
 
 	dereferenceSchedule := *schedule
@@ -80,32 +88,31 @@ func WeekScheduleToString(
 		lesson := dereferenceDaySchedule[i]
 		lessonTitle := lesson.Title
 
-		if !isHaveLessonsWhileWeekConvert(&strSchedule, lessonTitle, &day, dates) {
+		if !isHaveLessonsWhileWeekConvert(&scheduleString, lessonTitle, &day, datesRange) {
 			continue
 		}
 
-		if !isFoundLessonsWhileWeekConvert(&strSchedule, lessonTitle, &day, dates) {
+		if !isFoundLessonsWhileWeekConvert(&scheduleString, lessonTitle, &day, datesRange) {
 			continue
 		}
 
-		if isNextDayWhileWeekConvert(&strSchedule, lessonTitle, &day, dates) {
+		if isNextDayWhileWeekConvert(&scheduleString, lessonTitle, &day, datesRange) {
 			continue
 		}
-
-		strSchedule = *addLessonDataToStrSchedule(strSchedule, lesson)
+		scheduleString = *addLessonToScheduleString(scheduleString, lesson)
 	}
-	return &strSchedule
+	return &scheduleString
 }
 
-func addLessonDataToStrSchedule(strSchedule string, lesson *domain.Lesson) *string {
-	strSchedule += addLessonNumber(lesson.StartTime)
-	strSchedule += addLessonName(lesson.Title)
-	strSchedule += addLessonStartTime(lesson.StartTime)
-	strSchedule += addLessonFinishTime(lesson.FinishTime)
-	strSchedule += addLessonType(lesson.Type)
-	strSchedule += addLessonRoom(lesson.RoomId)
-	strSchedule += addLessonTeacherFullName(lesson.TeacherFullName)
-	return &strSchedule
+func addLessonToScheduleString(scheduleString string, lesson *domain.Lesson) *string {
+	scheduleString += addLessonNumber(lesson.StartTime)
+	scheduleString += addLessonName(lesson.Title)
+	scheduleString += addLessonStartTime(lesson.StartTime)
+	scheduleString += addLessonFinishTime(lesson.FinishTime)
+	scheduleString += addLessonType(lesson.Type)
+	scheduleString += addLessonRoom(lesson.RoomId)
+	scheduleString += addLessonTeacherFullName(lesson.TeacherFullName)
+	return &scheduleString
 }
 
 func addGroupId(studyGroupId string) string {
@@ -166,23 +173,23 @@ func addDate(date time.Time) string {
 	return strSchedule
 }
 
-func isHaveLessons(lessonTitleField string) bool {
-	return !strings.Contains(lessonTitleField, "no lessons")
+func isHaveLessons(lessonTitle string) bool {
+	return !strings.Contains(lessonTitle, "no lessons")
 }
 
-func isFoundLessons(lessonTitleField string) bool {
-	return !strings.Contains(lessonTitleField, "not found")
+func isFoundLessons(lessonTitle string) bool {
+	return !strings.Contains(lessonTitle, "not found")
 }
 
-func isNextDay(lessonTitleField string) bool {
-	return strings.Contains(lessonTitleField, "next day")
+func isNextDay(lessonTitle string) bool {
+	return strings.Contains(lessonTitle, "next day")
 }
 
-func isHaveLessonsWhileWeekConvert(strSchedule *string, lessonTitle string, day *int, dates []time.Time) bool {
+func isHaveLessonsWhileWeekConvert(scheduleString *string, lessonTitle string, day *int, datesRange []time.Time) bool {
 	if !isHaveLessons(lessonTitle) {
-		*strSchedule += addNoLessons()
+		*scheduleString += addNoLessons()
 		if isNextDay(lessonTitle) {
-			*strSchedule += addDate(dates[*day])
+			*scheduleString += addDate(datesRange[*day])
 			*day++
 		}
 		return false
@@ -190,11 +197,11 @@ func isHaveLessonsWhileWeekConvert(strSchedule *string, lessonTitle string, day 
 	return true
 }
 
-func isFoundLessonsWhileWeekConvert(strSchedule *string, lessonTitle string, day *int, dates []time.Time) bool {
+func isFoundLessonsWhileWeekConvert(scheduleString *string, lessonTitle string, day *int, datesRange []time.Time) bool {
 	if !isFoundLessons(lessonTitle) {
-		*strSchedule += addNotFoundLessons()
+		*scheduleString += addNotFoundLessons()
 		if isNextDay(lessonTitle) {
-			*strSchedule += addDate(dates[*day])
+			*scheduleString += addDate(datesRange[*day])
 			*day++
 		}
 		return false
@@ -202,9 +209,9 @@ func isFoundLessonsWhileWeekConvert(strSchedule *string, lessonTitle string, day
 	return true
 }
 
-func isNextDayWhileWeekConvert(strSchedule *string, lessonTitle string, day *int, dates []time.Time) bool {
+func isNextDayWhileWeekConvert(scheduleString *string, lessonTitle string, day *int, datesRange []time.Time) bool {
 	if isNextDay(lessonTitle) {
-		*strSchedule += addDate(dates[*day])
+		*scheduleString += addDate(datesRange[*day])
 		*day++
 		return true
 	}

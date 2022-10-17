@@ -1,63 +1,132 @@
 package xtime
 
 import (
+	"errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtimezone"
 	"github.com/vaberof/goweekdate"
 	"time"
 )
 
-func GetDateToParse(inputDateTelegramButton string) time.Time {
-	Novosibirsk := GetDefaultLocation(xtimezone.Novosibirsk)
-	switch inputDateTelegramButton {
-	case Today:
-		return GetTodayDate(Novosibirsk)
+func ParseDatesRange(inputTelegramButtonDate string) (time.Time, time.Time, error) {
+	switch inputTelegramButtonDate {
+	case "Today":
+		today, err := GetDate(inputTelegramButtonDate)
+		if err != nil {
+			return time.Time{}, time.Time{}, err
+		}
+		return today, today, nil
+	case "Tomorrow":
+		tomorrow, err := GetDate(inputTelegramButtonDate)
+		if err != nil {
+			return time.Time{}, time.Time{}, err
+		}
+		today := tomorrow.Add(-time.Hour * 24)
+		return today, tomorrow, nil
+	case "Week":
+		currentWeekDatesRange, err := GetDatesRange(inputTelegramButtonDate)
+		if err != nil {
+			return time.Time{}, time.Time{}, err
+		}
+		return currentWeekDatesRange[0], currentWeekDatesRange[6], nil
 	default:
-		return GetTomorrowDate(Novosibirsk)
+		nextWeekDatesRange, err := GetDatesRange(inputTelegramButtonDate)
+		if err != nil {
+			return time.Time{}, time.Time{}, err
+		}
+		return nextWeekDatesRange[0], nextWeekDatesRange[6], nil
 	}
 }
 
-func GetDatesToParse(inputDateTelegramButton string) []time.Time {
-	switch inputDateTelegramButton {
-	case Week:
-		return GetWeekDatesRange()
-	default:
-		return GetNextWeekDatesRange()
+func GetDate(inputTelegramButtonDate string) (time.Time, error) {
+	novosibirsk, err := GetDefaultLocation(xtimezone.Novosibirsk)
+	if err != nil {
+		return time.Time{}, err
 	}
+	return parseDate(inputTelegramButtonDate, novosibirsk)
 }
 
-func GetTodayDate(location *time.Location) time.Time {
+func GetDatesRange(inputTelegramButtonDate string) ([]time.Time, error) {
+	return parseDates(inputTelegramButtonDate)
+}
+
+func GetTodayDate(location *time.Location) (time.Time, error) {
 	todayDate := time.Now().In(location)
-	return todayDate
+	if todayDate.IsZero() {
+		return time.Time{}, errors.New("error occurred while getting today`s date")
+	}
+	return todayDate, nil
 }
 
-func GetTomorrowDate(location *time.Location) time.Time {
+func GetTomorrowDate(location *time.Location) (time.Time, error) {
 	tomorrowDate := time.Now().Add(time.Hour * 24).In(location)
-	return tomorrowDate
+	if tomorrowDate.IsZero() {
+		return time.Time{}, errors.New("error occurred while getting tomorrow`s date")
+	}
+	return tomorrowDate, nil
 }
 
-func GetWeekDatesRange() []time.Time {
+func GetWeekDatesRange() ([]time.Time, error) {
 	wd := weekdate.New(time.Now(), xtimezone.Novosibirsk)
-
 	Dates := wd.Dates(1, true)
-	return Dates
+	if len(Dates) == 0 {
+		return nil, errors.New("error occurred while getting array of dates range")
+	}
+	return Dates, nil
 }
 
-func GetNextWeekDatesRange() []time.Time {
+func GetNextWeekDatesRange() ([]time.Time, error) {
 	wd := weekdate.New(time.Now(), xtimezone.Novosibirsk)
-
 	Dates := wd.Dates(2, false)
-	return Dates
+	if len(Dates) == 0 {
+		return nil, errors.New("error occurred while getting array of dates range")
+	}
+	return Dates, nil
 }
 
-func GetDefaultLocation(location string) *time.Location {
-	loc, err := time.LoadLocation(location)
+func GetDefaultLocation(timeZone string) (*time.Location, error) {
+	location, err := time.LoadLocation(timeZone)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"location": location,
+			"timeZone": timeZone,
 			"error":    err,
 			"func":     "GetDefaultLocation",
-		}).Fatal("Failed to load a location")
+		}).Error("Failed to load a time zone")
+		return nil, err
 	}
-	return loc
+	return location, nil
+}
+
+func parseDate(inputTelegramButtonDate string, location *time.Location) (time.Time, error) {
+	switch inputTelegramButtonDate {
+	case Today:
+		todayDate, err := GetTodayDate(location)
+		if err != nil {
+			return time.Time{}, err
+		}
+		return todayDate, nil
+	default:
+		tomorrowDate, err := GetTomorrowDate(location)
+		if err != nil {
+			return time.Time{}, err
+		}
+		return tomorrowDate, nil
+	}
+}
+
+func parseDates(inputTelegramButtonDate string) ([]time.Time, error) {
+	switch inputTelegramButtonDate {
+	case Week:
+		currentWeekDatesRange, err := GetWeekDatesRange()
+		if err != nil {
+			return nil, err
+		}
+		return currentWeekDatesRange, nil
+	default:
+		nextWeekDatesRange, err := GetNextWeekDatesRange()
+		if err != nil {
+			return nil, err
+		}
+		return nextWeekDatesRange, nil
+	}
 }
