@@ -15,7 +15,6 @@ func (h *TelegramHandler) MenuButtonPressed(callBackQuery tgbotapi.Update) bool 
 func (h *TelegramHandler) HandleMenuButtonPress(
 	bot *tgbotapi.BotAPI,
 	update tgbotapi.Update,
-	inputTelegramMessage *InputTelegramMessage,
 	keyboard tgbotapi.InlineKeyboardMarkup) {
 
 	responseCallback := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data)
@@ -28,13 +27,15 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 		"button":   inputTelegramButtonDate,
 	}).Info("User requested a schedule")
 
-	if inputTelegramMessage == nil {
+	inputTelegramMessage, err := h.GetMessage(responseCallback.ChatID)
+	if inputTelegramMessage == nil || err != nil {
 		responseCallback.Text = "Введите номер группы"
 		bot.Send(responseCallback)
 		return
 	}
 
-	groupId := inputTelegramMessage.Message
+	groupId := *inputTelegramMessage
+	convGroupId := string(groupId)
 
 	fromDate, toDate, err := xtime.ParseDatesRange(inputTelegramButtonDate)
 	if err != nil {
@@ -43,14 +44,14 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 		return
 	}
 
-	schedule, err := h.ScheduleReceiver.GetSchedule(groupId, fromDate, toDate)
+	schedule, err := h.ScheduleReceiver.GetSchedule(convGroupId, fromDate, toDate)
 	if err != nil {
 		responseCallback.Text = err.Error()
 		bot.Send(responseCallback)
 		return
 	}
 
-	scheduleString, err := xstrconv.ScheduleToString(groupId, inputTelegramButtonDate, schedule)
+	scheduleString, err := xstrconv.ScheduleToString(convGroupId, inputTelegramButtonDate, schedule)
 	if scheduleString == nil || err != nil {
 		log.WithFields(log.Fields{
 			"schedule string": scheduleString,

@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/vaberof/TelegramBotUniversitySchedule/configs"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/entrypoint/telegram"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/message"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
 	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
 	"os"
@@ -35,25 +36,25 @@ func main() {
 
 	scheduleStorage := domain.NewScheduleStorage()
 	groupStorage := domain.NewGroupStorage()
+	messageStorage := message.NewMessageStorage()
 
 	scheduleService := domain.NewScheduleService(scheduleStorage, groupStorage, httpClient)
-	telegramHandler := telegram.NewTelegramHandler(scheduleService)
+	userService := message.NewMessageService(messageStorage)
 
-	var inputMessage *telegram.InputTelegramMessage
+	telegramHandler := telegram.NewTelegramHandler(scheduleService, userService)
 
 	for update := range updates {
 		if telegramHandler.CommandReceived(update) {
 			telegramHandler.HandleCommandMessage(bot, update)
 			continue
 		} else if telegramHandler.MessageReceived(update) {
-			inputMessage = telegramHandler.HandleNewMessage(bot, update, *botKeyboardMarkup)
+			telegramHandler.HandleNewMessage(bot, update, *botKeyboardMarkup)
 		} else if telegramHandler.MenuButtonPressed(update) {
-			telegramHandler.HandleMenuButtonPress(bot, update, inputMessage, *botKeyboardMarkup)
+			telegramHandler.HandleMenuButtonPress(bot, update, *botKeyboardMarkup)
 		}
 	}
 }
 
-// newBot creates bot.
 func newBot(config *configs.BotConfig) *tgbotapi.BotAPI {
 	token := config.Token
 	bot, err := tgbotapi.NewBotAPI(token)

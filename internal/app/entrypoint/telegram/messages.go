@@ -5,34 +5,27 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type InputTelegramMessage struct {
-	ChatId  int64
-	Message string
-}
-
-// HandleNewMessage
-// adds user`s chat id and his input group id to storage.MessageStorage
-// and sends reply message with buttons to press to get schedule.
-func (h *TelegramHandler) HandleNewMessage(bot *tgbotapi.BotAPI, update tgbotapi.Update, keyboard tgbotapi.InlineKeyboardMarkup) *InputTelegramMessage {
+func (h *TelegramHandler) HandleNewMessage(bot *tgbotapi.BotAPI, update tgbotapi.Update, keyboard tgbotapi.InlineKeyboardMarkup) {
 	responseMessage := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
+	inputMessageText := responseMessage.Text
+	chatId := responseMessage.ChatID
 
-	inputMsgText := responseMessage.Text
+	h.Messenger.SaveMessage(chatId, responseMessage.Text)
 
 	responseMessage.ReplyMarkup = keyboard
 	bot.Send(responseMessage)
 
 	log.WithFields(log.Fields{
 		"username": update.SentFrom(),
-		"message":  inputMsgText,
+		"message":  inputMessageText,
 	}).Info("User sent a message")
 
-	return &InputTelegramMessage{
-		ChatId:  responseMessage.ChatID,
-		Message: inputMsgText,
-	}
+	log.WithFields(log.Fields{
+		"chatId":  chatId,
+		"message": inputMessageText,
+	}).Info("message is saved")
 }
 
-// MessageReceived checks if user sent a message.
 func (h *TelegramHandler) MessageReceived(update tgbotapi.Update) bool {
 	return update.Message != nil
 }
