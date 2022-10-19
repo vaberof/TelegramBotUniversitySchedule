@@ -8,7 +8,7 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/entrypoint/telegram"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/message"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
-	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
+	infra "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/integration/unisite"
 	"os"
 	"time"
 )
@@ -30,16 +30,20 @@ func main() {
 
 	updates := bot.GetUpdatesChan(botUpdatesChannel)
 
+	messageStorage := message.NewMessageStorage()
+	userService := message.NewMessageService(messageStorage)
+
 	host := os.Getenv("host")
 	httpClientConfig := configs.NewHttpClientConfig(3 * time.Second)
-	httpClient := integration.NewHttpClient(host, httpClientConfig)
+
+	getScheduleResponseApi := infra.NewGetScheduleResponseApi(host, httpClientConfig)
+	getScheduleResponseApiService := infra.NewGetScheduleResponseApiService(getScheduleResponseApi)
 
 	scheduleStorage := domain.NewScheduleStorage()
 	groupStorage := domain.NewGroupStorage()
-	messageStorage := message.NewMessageStorage()
 
-	scheduleService := domain.NewScheduleService(scheduleStorage, groupStorage, httpClient)
-	userService := message.NewMessageService(messageStorage)
+	scheduleApi := domain.NewGetScheduleResponseApi(getScheduleResponseApiService)
+	scheduleService := domain.NewScheduleService(scheduleStorage, groupStorage, scheduleApi)
 
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, userService)
 

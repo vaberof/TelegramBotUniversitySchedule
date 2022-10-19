@@ -12,10 +12,6 @@ import (
 	"time"
 )
 
-type ScheduleApi interface {
-	GetSchedule(studyGroupQueryParams string, from time.Time, to time.Time) (*GetScheduleResponse, error)
-}
-
 type GetScheduleResponse struct {
 	Lessons []*Lesson
 }

@@ -1,12 +1,13 @@
 package telegram
 
 import (
-	"errors"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	log "github.com/sirupsen/logrus"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/xstrconv"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtime"
 )
+
+const errorMessageToTelegram string = "Ошибка: невозможно получить расписание"
 
 func (h *TelegramHandler) MenuButtonPressed(callBackQuery tgbotapi.Update) bool {
 	return callBackQuery.CallbackQuery != nil
@@ -39,14 +40,27 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 
 	fromDate, toDate, err := xtime.ParseDatesRange(inputTelegramButtonDate)
 	if err != nil {
-		responseCallback.Text = err.Error()
+		log.WithFields(log.Fields{
+			"fromDate": fromDate,
+			"toDate":   toDate,
+			"func":     "HandleMenuButtonPress",
+			"error":    err.Error(),
+		}).Error("Cannot parse dates range")
+
+		responseCallback.Text = errorMessageToTelegram
 		bot.Send(responseCallback)
 		return
 	}
 
 	schedule, err := h.ScheduleReceiver.GetSchedule(convGroupId, fromDate, toDate)
 	if err != nil {
-		responseCallback.Text = err.Error()
+		log.WithFields(log.Fields{
+			"schedule": schedule,
+			"func":     "HandleMenuButtonPress",
+			"error":    err.Error(),
+		}).Error("Cannot parse dates range")
+
+		responseCallback.Text = errorMessageToTelegram
 		bot.Send(responseCallback)
 		return
 	}
@@ -55,10 +69,11 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 	if scheduleString == nil || err != nil {
 		log.WithFields(log.Fields{
 			"schedule string": scheduleString,
-			"error":           err,
+			"error":           err.Error(),
+			"func":            "HandleMenuButtonPress",
 		}).Error("Cannot get schedule string")
 
-		responseCallback.Text = errors.New("Ошибка: невозможно получить расписание").Error()
+		responseCallback.Text = errorMessageToTelegram
 		bot.Send(responseCallback)
 		return
 	}
