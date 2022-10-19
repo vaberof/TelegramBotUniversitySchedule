@@ -60,7 +60,7 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 			"error":    err.Error(),
 		}).Error("Cannot parse dates range")
 
-		responseCallback.Text = errorMessageToTelegram
+		responseCallback.Text = err.Error()
 		bot.Send(responseCallback)
 		return
 	}

@@ -2,22 +2,32 @@ package infra
 
 import (
 	"errors"
+	"fmt"
+	log "github.com/sirupsen/logrus"
 	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
 	"time"
 )
 
 type GetScheduleResponseApiService struct {
-	scheduleApi *GetScheduleResponseApi
+	scheduleApi     *GetScheduleResponseApi
+	groupStorageApi *GroupStorage
 }
 
-func NewGetScheduleResponseApiService(scheduleApi *GetScheduleResponseApi) *GetScheduleResponseApiService {
+func NewGetScheduleResponseApiService(scheduleApi *GetScheduleResponseApi, groupStorage *GroupStorage) *GetScheduleResponseApiService {
 	return &GetScheduleResponseApiService{
-		scheduleApi: scheduleApi,
+		scheduleApi:     scheduleApi,
+		groupStorageApi: groupStorage,
 	}
 }
 
-func (s *GetScheduleResponseApiService) GetSchedule(studyGroupQueryParams string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
-	getScheduleResponse, err := s.scheduleApi.GetSchedule(studyGroupQueryParams, from, to)
+func (s *GetScheduleResponseApiService) GetSchedule(groupId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
+	groupExternalId := s.groupStorageApi.GetGroupExternalId(groupId)
+	if groupExternalId == nil {
+		return nil, errors.New(fmt.Sprintf("Группы '%s' не существует", groupId))
+	}
+	log.Printf("group name: %s, query params: %s", groupId, *groupExternalId)
+
+	getScheduleResponse, err := s.scheduleApi.GetSchedule(*groupExternalId, from, to)
 	if err != nil {
 		return nil, err
 	}

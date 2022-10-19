@@ -1,9 +1,9 @@
-package domain
+package infra
 
 import "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage"
 
 type GroupStorageApi interface {
-	GetStudyGroupQueryParams(groupId string) *string
+	GetGroupExternalId(groupId string) *string
 }
 
 type GroupStorage struct {

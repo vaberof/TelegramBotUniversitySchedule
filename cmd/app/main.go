@@ -31,21 +31,20 @@ func main() {
 	updates := bot.GetUpdatesChan(botUpdatesChannel)
 
 	messageStorage := message.NewMessageStorage()
-	userService := message.NewMessageService(messageStorage)
+	messageService := message.NewMessageService(messageStorage)
 
 	host := os.Getenv("host")
 	httpClientConfig := configs.NewHttpClientConfig(3 * time.Second)
 
 	getScheduleResponseApi := infra.NewGetScheduleResponseApi(host, httpClientConfig)
-	getScheduleResponseApiService := infra.NewGetScheduleResponseApiService(getScheduleResponseApi)
-
-	scheduleStorage := domain.NewScheduleStorage()
-	groupStorage := domain.NewGroupStorage()
+	groupStorage := infra.NewGroupStorage()
+	getScheduleResponseApiService := infra.NewGetScheduleResponseApiService(getScheduleResponseApi, groupStorage)
 
 	scheduleApi := domain.NewGetScheduleResponseApi(getScheduleResponseApiService)
-	scheduleService := domain.NewScheduleService(scheduleStorage, groupStorage, scheduleApi)
+	scheduleStorage := domain.NewScheduleStorage()
+	scheduleService := domain.NewScheduleService(scheduleStorage, scheduleApi)
 
-	telegramHandler := telegram.NewTelegramHandler(scheduleService, userService)
+	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageService)
 
 	for update := range updates {
 		if telegramHandler.CommandReceived(update) {

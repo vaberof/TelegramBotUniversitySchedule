@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"errors"
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	infra "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/integration/unisite"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage"
@@ -12,14 +10,12 @@ import (
 
 type ScheduleService struct {
 	scheduleStorageApi *ScheduleStorage
-	groupStorageApi    *GroupStorage
 	scheduleApi        *GetScheduleResponseApi
 }
 
-func NewScheduleService(scheduleStorage *ScheduleStorage, groupStorage *GroupStorage, scheduleApi *GetScheduleResponseApi) *ScheduleService {
+func NewScheduleService(scheduleStorage *ScheduleStorage, scheduleApi *GetScheduleResponseApi) *ScheduleService {
 	return &ScheduleService{
 		scheduleStorageApi: scheduleStorage,
-		groupStorageApi:    groupStorage,
 		scheduleApi:        scheduleApi,
 	}
 }
@@ -29,15 +25,9 @@ func (s *ScheduleService) GetSchedule(groupId string, from time.Time, to time.Ti
 }
 
 func (s *ScheduleService) getScheduleImpl(groupId string, from time.Time, to time.Time) (*Schedule, error) {
-	studyGroupQueryParams := s.groupStorageApi.GetStudyGroupQueryParams(groupId)
-	if studyGroupQueryParams == nil {
-		return nil, errors.New(fmt.Sprintf("Группы '%s' не существует", groupId))
-	}
-	log.Printf("group name: %s, query params: %s", groupId, *studyGroupQueryParams)
-
 	cachedLessons, err := s.scheduleStorageApi.GetCachedLessons(groupId, from, to)
 	if cachedLessons == nil || err != nil {
-		getScheduleResponse, err := s.callScheduleApi(*studyGroupQueryParams, from, to)
+		getScheduleResponse, err := s.callScheduleApi(groupId, from, to)
 		if err != nil {
 			return nil, err
 		}
@@ -77,8 +67,8 @@ func (s *ScheduleService) cacheLessons(groupId string, lessons []*infra.Lesson, 
 	return nil
 }
 
-func (s *ScheduleService) callScheduleApi(studyGroupQueryParams string, from time.Time, to time.Time) (*infra.GetScheduleResponse, error) {
-	getScheduleResponse, err := s.scheduleApi.GetSchedule(studyGroupQueryParams, from, to)
+func (s *ScheduleService) callScheduleApi(groupId string, from time.Time, to time.Time) (*infra.GetScheduleResponse, error) {
+	getScheduleResponse, err := s.scheduleApi.GetSchedule(groupId, from, to)
 	log.Printf("schedule response from scheduleApi: %v", getScheduleResponse)
 	if err != nil {
 		return nil, err

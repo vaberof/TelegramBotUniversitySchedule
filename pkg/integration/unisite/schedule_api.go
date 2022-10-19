@@ -36,12 +36,12 @@ type Lesson struct {
 	TeacherFullName string
 }
 
-func (httpClient *HttpClient) GetSchedule(studyGroupQueryParams string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
-	return httpClient.getScheduleResponse(studyGroupQueryParams, from, to)
+func (httpClient *HttpClient) GetSchedule(groupExternalId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
+	return httpClient.getScheduleResponse(groupExternalId, from, to)
 }
 
-func (httpClient *HttpClient) getScheduleResponse(studyGroupQueryParams string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
-	htmlDocument, err := httpClient.getHtmlDocument(studyGroupQueryParams)
+func (httpClient *HttpClient) getScheduleResponse(groupExternalId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
+	htmlDocument, err := httpClient.getHtmlDocument(groupExternalId)
 	if err != nil {
 		return nil, err
 	}
@@ -154,8 +154,8 @@ func (httpClient *HttpClient) parseDateSelection(
 	})
 }
 
-func (httpClient *HttpClient) getHtmlDocument(studyGroupQueryParams string) (*goquery.Document, error) {
-	response, err := httpClient.makeRequest(studyGroupQueryParams)
+func (httpClient *HttpClient) getHtmlDocument(groupExternalId string) (*goquery.Document, error) {
+	response, err := httpClient.makeRequest(groupExternalId)
 	if err != nil {
 		//httpError := fmt.Sprint("Ошибка: превышено время ожидания от сервера")
 		return nil, err
@@ -175,8 +175,8 @@ func (httpClient *HttpClient) getHtmlDocument(studyGroupQueryParams string) (*go
 	return htmlDocument, nil
 }
 
-func (httpClient *HttpClient) makeRequest(studyGroupQueryParams string) (*resty.Response, error) {
-	response, err := httpClient.client.R().Get(httpClient.host + studyGroupQueryParams)
+func (httpClient *HttpClient) makeRequest(groupExternalId string) (*resty.Response, error) {
+	response, err := httpClient.client.R().Get(httpClient.host + groupExternalId)
 	if err != nil {
 		log.Println(err.Error())
 		return nil, errors.New("Ошибка: превышено время ожидания от сервера")

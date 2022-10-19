@@ -27,7 +27,7 @@ func NewGroupStorage() *GroupStorage {
 	}
 }
 
-func (g *GroupStorage) GetStudyGroupQueryParams(groupId string) *string {
+func (g *GroupStorage) GetGroupExternalId(groupId string) *string {
 	for i := 0; i < len(g.Groups); i++ {
 		group := *g.Groups[i]
 		if group.Id+"-"+group.Name == groupId {

@@ -6,7 +6,7 @@ import (
 )
 
 type ScheduleApi interface {
-	GetSchedule(studyGroupQueryParams string, from time.Time, to time.Time) (*infra.GetScheduleResponse, error)
+	GetSchedule(groupId string, from time.Time, to time.Time) (*infra.GetScheduleResponse, error)
 }
 
 type GetScheduleResponseApi struct {
