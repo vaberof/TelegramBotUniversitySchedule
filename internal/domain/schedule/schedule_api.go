@@ -5,16 +5,16 @@ import (
 	"time"
 )
 
-type ScheduleApi interface {
+type GetScheduleResponseReceiver interface {
 	GetSchedule(groupId string, from time.Time, to time.Time) (*infra.GetScheduleResponse, error)
 }
 
-type GetScheduleResponseApi struct {
-	ScheduleApi
+type GetScheduleResponse struct {
+	GetScheduleResponseReceiver
 }
 
-func NewGetScheduleResponseApi(scheduleApi *infra.GetScheduleResponseApiService) *GetScheduleResponseApi {
-	return &GetScheduleResponseApi{
-		ScheduleApi: scheduleApi,
+func NewGetScheduleResponse(getScheduleResponseService *infra.GetScheduleResponseService) *GetScheduleResponse {
+	return &GetScheduleResponse{
+		GetScheduleResponseReceiver: getScheduleResponseService,
 	}
 }

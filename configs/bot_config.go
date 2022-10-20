@@ -5,5 +5,7 @@ type BotConfig struct {
 }
 
 func NewBotConfig(token string) *BotConfig {
-	return &BotConfig{Token: token}
+	return &BotConfig{
+		Token: token,
+	}
 }

@@ -14,8 +14,8 @@ type GetScheduleResponseApi struct {
 	ScheduleApi
 }
 
-func NewGetScheduleResponseApi(host string, config *configs.HttpClientConfig) *GetScheduleResponseApi {
+func NewGetScheduleResponseApi(config *configs.HttpClientConfig) *GetScheduleResponseApi {
 	return &GetScheduleResponseApi{
-		ScheduleApi: integration.NewHttpClient(host, config),
+		ScheduleApi: integration.NewHttpClient(config),
 	}
 }

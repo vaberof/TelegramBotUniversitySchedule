@@ -10,9 +10,9 @@ type HttpClient struct {
 	host   string
 }
 
-func NewHttpClient(host string, config *configs.HttpClientConfig) *HttpClient {
+func NewHttpClient(config *configs.HttpClientConfig) *HttpClient {
 	return &HttpClient{
-		host:   host,
+		host:   config.Host,
 		client: resty.New().SetTimeout(config.Timeout),
 	}
 }

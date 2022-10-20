@@ -36,7 +36,7 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 	}
 
 	groupId := *inputTelegramMessage
-	convGroupId := string(groupId)
+	groupIdString := string(groupId)
 
 	fromDate, toDate, err := xtime.ParseDatesRange(inputTelegramButtonDate)
 	if err != nil {
@@ -52,7 +52,7 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 		return
 	}
 
-	schedule, err := h.ScheduleReceiver.GetSchedule(convGroupId, fromDate, toDate)
+	schedule, err := h.ScheduleReceiver.GetSchedule(groupIdString, fromDate, toDate)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"schedule": schedule,
@@ -65,7 +65,7 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 		return
 	}
 
-	scheduleString, err := xstrconv.ScheduleToString(convGroupId, inputTelegramButtonDate, schedule)
+	scheduleString, err := xstrconv.ScheduleToString(groupIdString, inputTelegramButtonDate, schedule)
 	if scheduleString == nil || err != nil {
 		log.WithFields(log.Fields{
 			"schedule string": scheduleString,

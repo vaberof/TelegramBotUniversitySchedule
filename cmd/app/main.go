@@ -4,6 +4,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/vaberof/TelegramBotUniversitySchedule/configs"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/entrypoint/telegram"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/message"
@@ -14,6 +15,10 @@ import (
 )
 
 func main() {
+	if err := initConfig(); err != nil {
+		log.Fatalf("failed initializating config: %s", err.Error())
+	}
+
 	err := godotenv.Load("../../.env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -22,7 +27,6 @@ func main() {
 	botKeyboardMarkup := newBotKeyboardMarkup()
 
 	botConfig := configs.NewBotConfig(os.Getenv("token"))
-
 	bot := newBot(botConfig)
 
 	botUpdatesChannel := tgbotapi.NewUpdate(0)
@@ -33,16 +37,17 @@ func main() {
 	messageStorage := message.NewMessageStorage()
 	messageService := message.NewMessageService(messageStorage)
 
-	host := os.Getenv("host")
-	httpClientConfig := configs.NewHttpClientConfig(3 * time.Second)
+	httpClientConfig := configs.NewHttpClientConfig(
+		viper.GetString("server.host"),
+		time.Duration(viper.GetInt("server.timeout"))*time.Second)
 
-	getScheduleResponseApi := infra.NewGetScheduleResponseApi(host, httpClientConfig)
+	scheduleApi := infra.NewGetScheduleResponseApi(httpClientConfig)
 	groupStorage := infra.NewGroupStorage()
-	getScheduleResponseApiService := infra.NewGetScheduleResponseApiService(getScheduleResponseApi, groupStorage)
+	getScheduleResponseService := infra.NewGetScheduleResponseService(scheduleApi, groupStorage)
 
-	scheduleApi := domain.NewGetScheduleResponseApi(getScheduleResponseApiService)
+	getScheduleResponse := domain.NewGetScheduleResponse(getScheduleResponseService)
 	scheduleStorage := domain.NewScheduleStorage()
-	scheduleService := domain.NewScheduleService(scheduleStorage, scheduleApi)
+	scheduleService := domain.NewScheduleService(scheduleStorage, getScheduleResponse)
 
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageService)
 
@@ -86,6 +91,11 @@ func newBotKeyboardMarkup() *tgbotapi.InlineKeyboardMarkup {
 			tgbotapi.NewInlineKeyboardButtonData("След. неделя", "Next week"),
 		),
 	)
-
 	return &botKeyboardMarkup
+}
+
+func initConfig() error {
+	viper.AddConfigPath("../../configs")
+	viper.SetConfigName("config")
+	return viper.ReadInConfig()
 }

@@ -13,7 +13,7 @@ type GroupId string
 type Date string
 
 type ScheduleStorage struct {
-	Schedule map[GroupId]map[Date]*Schedule
+	scheduleStorage map[GroupId]map[Date]*Schedule
 }
 
 type Schedule struct {
@@ -32,17 +32,17 @@ type Lesson struct {
 
 func NewScheduleStorage() *ScheduleStorage {
 	return &ScheduleStorage{
-		Schedule: map[GroupId]map[Date]*Schedule{},
+		scheduleStorage: map[GroupId]map[Date]*Schedule{},
 	}
 }
 
-func (s *ScheduleStorage) GetCachedLessons(groupId string, from time.Time, to time.Time) ([]*Lesson, error) {
+func (s *ScheduleStorage) GetLessons(groupId string, from time.Time, to time.Time) ([]*Lesson, error) {
 	dateString, err := xtimeconv.FromTimeToString(from, to)
 	if err != nil {
 		return nil, err
 	}
 
-	schedule := s.Schedule[GroupId(groupId)][Date(dateString)]
+	schedule := s.scheduleStorage[GroupId(groupId)][Date(dateString)]
 	if schedule == nil {
 		return nil, errors.New("schedule not cached yet")
 	}
@@ -71,11 +71,11 @@ func (s *ScheduleStorage) SaveLessons(groupId string, from time.Time, to time.Ti
 		return err
 	}
 
-	if s.Schedule[GroupId(groupId)] == nil {
-		s.Schedule[GroupId(groupId)] = make(map[Date]*Schedule)
+	if s.scheduleStorage[GroupId(groupId)] == nil {
+		s.scheduleStorage[GroupId(groupId)] = make(map[Date]*Schedule)
 	}
 
-	s.Schedule[GroupId(groupId)][Date(dateString)] = &schedule
+	s.scheduleStorage[GroupId(groupId)][Date(dateString)] = &schedule
 	return nil
 }
 
@@ -111,8 +111,8 @@ func (s *ScheduleStorage) isScheduleOutdated(schedule *Schedule) error {
 		return err
 	}
 
-	currentTime := time.Now().In(novosibirsk)
-	if currentTime.Format("02.01") == schedule.ExpireTime.Format("02.01") {
+	currentDate := time.Now().In(novosibirsk).Format("02.01")
+	if currentDate == schedule.ExpireTime.Format("02.01") {
 		log.Printf("schedule is outdated: %s", schedule.ExpireTime.Format("02.01"))
 		return errors.New("schedule is outdated")
 	}
