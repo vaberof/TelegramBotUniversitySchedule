@@ -40,13 +40,13 @@ func main() {
 		viper.GetString("server.host"),
 		time.Duration(viper.GetInt("server.timeout"))*time.Second)
 
-	scheduleApi := infra.NewGetScheduleResponseApi(httpClientConfig)
+	getScheduleResponseApi := infra.NewGetScheduleResponseApi(httpClientConfig)
 	groupStorage := infra.NewGroupStorage()
-	getScheduleResponseService := infra.NewGetScheduleResponseService(scheduleApi, groupStorage)
+	getScheduleResponseService := infra.NewGetScheduleResponseService(getScheduleResponseApi, groupStorage)
 
-	getScheduleResponse := domain.NewGetScheduleResponse(getScheduleResponseService)
+	scheduleApi := domain.NewScheduleApi(getScheduleResponseService)
 	scheduleStorage := domain.NewScheduleStorage()
-	scheduleService := domain.NewScheduleService(getScheduleResponse, scheduleStorage)
+	scheduleService := domain.NewScheduleService(scheduleApi, scheduleStorage)
 
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageService)
 

@@ -9,14 +9,14 @@ import (
 )
 
 type ScheduleService struct {
-	getScheduleResponse *GetScheduleResponse
-	scheduleStorage     *ScheduleStorage
+	scheduleApi     *ScheduleApi
+	scheduleStorage *ScheduleStorage
 }
 
-func NewScheduleService(scheduleApi *GetScheduleResponse, scheduleStorage *ScheduleStorage) *ScheduleService {
+func NewScheduleService(scheduleApi *ScheduleApi, scheduleStorage *ScheduleStorage) *ScheduleService {
 	return &ScheduleService{
-		getScheduleResponse: scheduleApi,
-		scheduleStorage:     scheduleStorage,
+		scheduleApi:     scheduleApi,
+		scheduleStorage: scheduleStorage,
 	}
 }
 
@@ -32,8 +32,7 @@ func (s *ScheduleService) getScheduleImpl(groupId string, from time.Time, to tim
 			return nil, err
 		}
 
-		err = s.cacheLessons(groupId, getScheduleResponse.Lessons, from, to)
-		if err != nil {
+		if err = s.cacheLessons(groupId, getScheduleResponse.Lessons, from, to); err != nil {
 			return nil, err
 		}
 
@@ -54,7 +53,7 @@ func (s *ScheduleService) getScheduleImpl(groupId string, from time.Time, to tim
 }
 
 func (s *ScheduleService) callScheduleApi(groupId string, from time.Time, to time.Time) (*infra.GetScheduleResponse, error) {
-	getScheduleResponse, err := s.getScheduleResponse.GetSchedule(groupId, from, to)
+	getScheduleResponse, err := s.scheduleApi.GetSchedule(groupId, from, to)
 	if err != nil {
 		return nil, err
 	}

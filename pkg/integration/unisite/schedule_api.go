@@ -37,10 +37,10 @@ func (s *GetScheduleResponse) addLesson(title, startTime, finishTime, lessonType
 }
 
 func (httpClient *HttpClient) GetSchedule(groupExternalId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
-	return httpClient.getGetScheduleResponse(groupExternalId, from, to)
+	return httpClient.getScheduleImpl(groupExternalId, from, to)
 }
 
-func (httpClient *HttpClient) getGetScheduleResponse(groupExternalId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
+func (httpClient *HttpClient) getScheduleImpl(groupExternalId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
 	htmlDocument, err := httpClient.getHtmlDocument(groupExternalId)
 	if err != nil {
 		return nil, err

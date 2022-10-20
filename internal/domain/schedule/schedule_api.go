@@ -9,12 +9,12 @@ type GetScheduleResponseReceiver interface {
 	GetSchedule(groupId string, from time.Time, to time.Time) (*infra.GetScheduleResponse, error)
 }
 
-type GetScheduleResponse struct {
+type ScheduleApi struct {
 	GetScheduleResponseReceiver
 }
 
-func NewGetScheduleResponse(getScheduleResponseService *infra.GetScheduleResponseService) *GetScheduleResponse {
-	return &GetScheduleResponse{
+func NewScheduleApi(getScheduleResponseService *infra.GetScheduleResponseService) *ScheduleApi {
+	return &ScheduleApi{
 		GetScheduleResponseReceiver: getScheduleResponseService,
 	}
 }
