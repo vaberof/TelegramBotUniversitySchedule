@@ -2,7 +2,6 @@ package main
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/vaberof/TelegramBotUniversitySchedule/configs"
@@ -17,10 +16,6 @@ import (
 func main() {
 	if err := initConfig(); err != nil {
 		log.Fatalf("failed initializating config: %s", err.Error())
-	}
-
-	if err := godotenv.Load("../../.env"); err != nil {
-		log.Fatal("Error loading .env file")
 	}
 
 	botKeyboardMarkup := newBotKeyboardMarkup()
@@ -94,7 +89,7 @@ func newBotKeyboardMarkup() *tgbotapi.InlineKeyboardMarkup {
 }
 
 func initConfig() error {
-	viper.AddConfigPath("../../configs")
+	viper.AddConfigPath("./configs")
 	viper.SetConfigName("config")
 	return viper.ReadInConfig()
 }
