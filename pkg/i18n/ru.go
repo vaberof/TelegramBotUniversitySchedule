@@ -4,7 +4,6 @@ import (
 	"time"
 )
 
-// FormatRuWeekday translates day of the week from english to russian.
 func FormatRuWeekday(engDay time.Weekday) string {
 	switch engDay {
 	case time.Monday:

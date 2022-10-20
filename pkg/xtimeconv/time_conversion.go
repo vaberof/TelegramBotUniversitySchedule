@@ -13,7 +13,7 @@ func FromTimeToString(from time.Time, to time.Time) (string, error) {
 		return "", err
 	}
 
-	dateString, err := getStringPeriodOfTime(from, to, novosibirsk)
+	dateString, err := getDateString(from, to, novosibirsk)
 	if err != nil {
 		return "", err
 	}
@@ -21,7 +21,7 @@ func FromTimeToString(from time.Time, to time.Time) (string, error) {
 	return dateString, nil
 }
 
-func getStringPeriodOfTime(from time.Time, to time.Time, location *time.Location) (string, error) {
+func getDateString(from time.Time, to time.Time, location *time.Location) (string, error) {
 	today, tomorrow, week, nextWeek, err := getDates(location)
 	if err != nil {
 		return "", err

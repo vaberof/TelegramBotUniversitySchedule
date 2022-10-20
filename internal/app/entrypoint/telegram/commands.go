@@ -2,7 +2,6 @@ package telegram
 
 import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
-// HandleCommandMessage handles received command and sends corresponding message to user.
 func (h *TelegramHandler) HandleCommandMessage(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	responseMessage := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 
@@ -22,7 +21,6 @@ func (h *TelegramHandler) HandleCommandMessage(bot *tgbotapi.BotAPI, update tgbo
 	}
 }
 
-// CommandReceived checks if user sent a command.
 func (h *TelegramHandler) CommandReceived(update tgbotapi.Update) bool {
 	if update.Message == nil {
 		return false
