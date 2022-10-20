@@ -89,7 +89,8 @@ func newBotKeyboardMarkup() *tgbotapi.InlineKeyboardMarkup {
 }
 
 func initConfig() error {
-	viper.AddConfigPath("./configs")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("./configs/")
 	viper.SetConfigName("config")
 	return viper.ReadInConfig()
 }
