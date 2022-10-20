@@ -9,14 +9,14 @@ import (
 )
 
 type ScheduleService struct {
-	scheduleStorage     *ScheduleStorage
 	getScheduleResponse *GetScheduleResponse
+	scheduleStorage     *ScheduleStorage
 }
 
-func NewScheduleService(scheduleStorage *ScheduleStorage, scheduleApi *GetScheduleResponse) *ScheduleService {
+func NewScheduleService(scheduleApi *GetScheduleResponse, scheduleStorage *ScheduleStorage) *ScheduleService {
 	return &ScheduleService{
-		scheduleStorage:     scheduleStorage,
 		getScheduleResponse: scheduleApi,
+		scheduleStorage:     scheduleStorage,
 	}
 }
 
@@ -58,7 +58,6 @@ func (s *ScheduleService) callScheduleApi(groupId string, from time.Time, to tim
 	if err != nil {
 		return nil, err
 	}
-
 	return getScheduleResponse, nil
 }
 
@@ -82,7 +81,7 @@ func (s *ScheduleService) fromGetScheduleRespToDomainSchedule(getScheduleRespons
 
 	daySchedule := s.respLessonsToDomainDaySchedule(getScheduleResponse.Lessons)
 
-	dateString, err := xtimeconv.FromTimeToString(from, to)
+	dateString, err := xtimeconv.FromTimeToDateString(from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +146,7 @@ func (s *ScheduleService) storageLessonsToDomainSchedule(storageLessons []*stora
 
 	daySchedule := s.storageLessonsToDomainDaySchedule(storageLessons)
 
-	strDate, err := xtimeconv.FromTimeToString(from, to)
+	strDate, err := xtimeconv.FromTimeToDateString(from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +154,6 @@ func (s *ScheduleService) storageLessonsToDomainSchedule(storageLessons []*stora
 
 	schedule := make(Schedule)
 	schedule[Date(strDate)] = daySchedule
-
 	return &schedule, nil
 }
 
@@ -166,7 +164,6 @@ func (s *ScheduleService) storageLessonsToDomainDaySchedule(storageLessons []*st
 		lesson := s.storageLessonToDomainLesson(storageLessons[i])
 		daySchedule = append(daySchedule, lesson)
 	}
-
 	return &daySchedule
 }
 

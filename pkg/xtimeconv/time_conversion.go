@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func FromTimeToString(from time.Time, to time.Time) (string, error) {
+func FromTimeToDateString(from time.Time, to time.Time) (string, error) {
 	novosibirsk, err := xtime.GetDefaultLocation(xtimezone.Novosibirsk)
 	if err != nil {
 		return "", err

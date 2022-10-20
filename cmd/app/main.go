@@ -19,8 +19,7 @@ func main() {
 		log.Fatalf("failed initializating config: %s", err.Error())
 	}
 
-	err := godotenv.Load("../../.env")
-	if err != nil {
+	if err := godotenv.Load("../../.env"); err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
@@ -47,7 +46,7 @@ func main() {
 
 	getScheduleResponse := domain.NewGetScheduleResponse(getScheduleResponseService)
 	scheduleStorage := domain.NewScheduleStorage()
-	scheduleService := domain.NewScheduleService(scheduleStorage, getScheduleResponse)
+	scheduleService := domain.NewScheduleService(getScheduleResponse, scheduleStorage)
 
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageService)
 

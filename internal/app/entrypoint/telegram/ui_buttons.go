@@ -9,10 +9,6 @@ import (
 
 const errorMessageToTelegram string = "Ошибка: невозможно получить расписание"
 
-func (h *TelegramHandler) MenuButtonPressed(callBackQuery tgbotapi.Update) bool {
-	return callBackQuery.CallbackQuery != nil
-}
-
 func (h *TelegramHandler) HandleMenuButtonPress(
 	bot *tgbotapi.BotAPI,
 	update tgbotapi.Update,
@@ -58,7 +54,7 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 			"schedule": schedule,
 			"func":     "HandleMenuButtonPress",
 			"error":    err.Error(),
-		}).Error("Cannot parse dates range")
+		}).Error("Cannot get schedule")
 
 		responseCallback.Text = err.Error()
 		bot.Send(responseCallback)
@@ -85,4 +81,8 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 	if err != nil {
 		log.Panic(err.Error())
 	}
+}
+
+func (h *TelegramHandler) MenuButtonPressed(callBackQuery tgbotapi.Update) bool {
+	return callBackQuery.CallbackQuery != nil
 }

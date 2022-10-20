@@ -37,7 +37,7 @@ func NewScheduleStorage() *ScheduleStorage {
 }
 
 func (s *ScheduleStorage) GetLessons(groupId string, from time.Time, to time.Time) ([]*Lesson, error) {
-	dateString, err := xtimeconv.FromTimeToString(from, to)
+	dateString, err := xtimeconv.FromTimeToDateString(from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -47,17 +47,18 @@ func (s *ScheduleStorage) GetLessons(groupId string, from time.Time, to time.Tim
 		return nil, errors.New("schedule not cached yet")
 	}
 
-	if err = s.isScheduleOutdated(schedule); err != nil {
+	if err = s.isScheduleOutdated(schedule.ExpireTime); err != nil {
 		return nil, err
 	}
 
 	log.Printf("schedule sent from cache")
 	log.Printf("expire time: %s", schedule.ExpireTime.Format("02.01.2006"))
+
 	return schedule.Lessons, nil
 }
 
 func (s *ScheduleStorage) SaveLessons(groupId string, from time.Time, to time.Time, lessons []*Lesson) error {
-	dateString, err := xtimeconv.FromTimeToString(from, to)
+	dateString, err := xtimeconv.FromTimeToDateString(from, to)
 	if err != nil {
 		return err
 	}
@@ -80,41 +81,45 @@ func (s *ScheduleStorage) SaveLessons(groupId string, from time.Time, to time.Ti
 }
 
 func (s *ScheduleStorage) setExpireTime(schedule *Schedule, from time.Time, to time.Time) error {
-	dateString, err := xtimeconv.FromTimeToString(from, to)
+	dateString, err := xtimeconv.FromTimeToDateString(from, to)
 	if err != nil {
 		return err
 	}
 
-	s.setExpireTimeImpl(dateString, schedule, to)
+	s.setExpireTimeImpl(schedule, dateString, to)
 	log.Printf("settled expire time: %s", schedule.ExpireTime.Format("02.01.2006"))
 	return nil
 }
 
-func (s *ScheduleStorage) setExpireTimeImpl(dateString string, schedule *Schedule, date time.Time) {
+func (s *ScheduleStorage) setExpireTimeImpl(schedule *Schedule, dateString string, date time.Time) {
 	switch dateString {
 	case "Today":
-		schedule.ExpireTime = date.Add(24 * time.Hour)
+		tomorrowExpire := date.Add(24 * time.Hour)
+		schedule.ExpireTime = tomorrowExpire
 	case "Tomorrow":
-		schedule.ExpireTime = date
+		tomorrowExpire := date
+		schedule.ExpireTime = tomorrowExpire
 	case "Week":
 		// date is equals to sunday of the current week
-		schedule.ExpireTime = date.Add(24 * time.Hour)
+		nextMondayExpire := date.Add(24 * time.Hour)
+		schedule.ExpireTime = nextMondayExpire
 	default:
 		// date is equals to sunday of the next week
-		schedule.ExpireTime = date.Add(-6 * 24 * time.Hour)
+		nextMondayExpire := date.Add(-6 * 24 * time.Hour)
+		schedule.ExpireTime = nextMondayExpire
 	}
 }
 
-func (s *ScheduleStorage) isScheduleOutdated(schedule *Schedule) error {
+func (s *ScheduleStorage) isScheduleOutdated(scheduleExpireTime time.Time) error {
 	novosibirsk, err := xtime.GetDefaultLocation(xtimezone.Novosibirsk)
 	if err != nil {
 		return err
 	}
 
 	currentDate := time.Now().In(novosibirsk).Format("02.01")
-	if currentDate == schedule.ExpireTime.Format("02.01") {
-		log.Printf("schedule is outdated: %s", schedule.ExpireTime.Format("02.01"))
-		return errors.New("schedule is outdated")
+	if currentDate == scheduleExpireTime.Format("02.01") {
+		log.Printf("schedule is outdated: %s", scheduleExpireTime.Format("02.01"))
+		return errors.New("scheduleExpireTime is outdated")
 	}
 	return nil
 }

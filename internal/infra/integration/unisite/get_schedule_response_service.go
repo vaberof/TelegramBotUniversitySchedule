@@ -42,9 +42,9 @@ func (s *GetScheduleResponseService) GetSchedule(groupId string, from time.Time,
 }
 
 func (s *GetScheduleResponseService) getScheduleRespToInfraSchedule(getScheduleResponse *integration.GetScheduleResponse) *GetScheduleResponse {
-	var scheduleResponse GetScheduleResponse
-	scheduleResponse.Lessons = s.getScheduleRespLessonsToInfraLessons(getScheduleResponse.Lessons)
-	return &scheduleResponse
+	var infraGetScheduleResponse GetScheduleResponse
+	infraGetScheduleResponse.Lessons = s.getScheduleRespLessonsToInfraLessons(getScheduleResponse.Lessons)
+	return &infraGetScheduleResponse
 }
 
 func (s *GetScheduleResponseService) getScheduleRespLessonsToInfraLessons(getScheduleRespLessons []*integration.Lesson) []*Lesson {
@@ -54,7 +54,6 @@ func (s *GetScheduleResponseService) getScheduleRespLessonsToInfraLessons(getSch
 		lesson := s.getScheduleRespLessonToInfraLesson(getScheduleRespLessons[i])
 		lessons = append(lessons, lesson)
 	}
-
 	return lessons
 }
 

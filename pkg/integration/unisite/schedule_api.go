@@ -16,17 +16,6 @@ type GetScheduleResponse struct {
 	Lessons []*Lesson
 }
 
-func (r *GetScheduleResponse) addLesson(title, startTime, finishTime, lessonType, roomId, teacherFullName string) {
-	r.Lessons = append(r.Lessons, &Lesson{
-		title,
-		startTime,
-		finishTime,
-		lessonType,
-		roomId,
-		teacherFullName,
-	})
-}
-
 type Lesson struct {
 	Title           string
 	StartTime       string
@@ -36,11 +25,22 @@ type Lesson struct {
 	TeacherFullName string
 }
 
-func (httpClient *HttpClient) GetSchedule(groupExternalId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
-	return httpClient.getScheduleResponse(groupExternalId, from, to)
+func (s *GetScheduleResponse) addLesson(title, startTime, finishTime, lessonType, roomId, teacherFullName string) {
+	s.Lessons = append(s.Lessons, &Lesson{
+		title,
+		startTime,
+		finishTime,
+		lessonType,
+		roomId,
+		teacherFullName,
+	})
 }
 
-func (httpClient *HttpClient) getScheduleResponse(groupExternalId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
+func (httpClient *HttpClient) GetSchedule(groupExternalId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
+	return httpClient.getGetScheduleResponse(groupExternalId, from, to)
+}
+
+func (httpClient *HttpClient) getGetScheduleResponse(groupExternalId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
 	htmlDocument, err := httpClient.getHtmlDocument(groupExternalId)
 	if err != nil {
 		return nil, err
@@ -50,11 +50,14 @@ func (httpClient *HttpClient) getScheduleResponse(groupExternalId string, from t
 }
 
 func (httpClient *HttpClient) parseLessons(htmlDocument *goquery.Document, from time.Time, to time.Time) (*GetScheduleResponse, error) {
-	dateString, err := xtimeconv.FromTimeToString(from, to)
+	dateString, err := xtimeconv.FromTimeToDateString(from, to)
 	if err != nil {
 		return nil, err
 	}
+	return httpClient.parseLessonsImpl(dateString, htmlDocument, from, to)
+}
 
+func (httpClient *HttpClient) parseLessonsImpl(dateString string, htmlDocument *goquery.Document, from time.Time, to time.Time) (*GetScheduleResponse, error) {
 	switch dateString {
 	case "Today", "Tomorrow":
 		return httpClient.parseDayLessons(htmlDocument, to)
@@ -72,13 +75,14 @@ func (httpClient *HttpClient) parseDayLessons(htmlDocument *goquery.Document, to
 	if httpClient.isNilSelection(dateSelection) {
 		var getScheduleResponse GetScheduleResponse
 		getScheduleResponse = *addNotFoundLessonsMsg(&getScheduleResponse)
+		log.Info("Html tag not found")
 		return &getScheduleResponse, nil
 	}
 
 	var getScheduleResponse GetScheduleResponse
 	var lessons []string
 
-	httpClient.parseDateSelection(&getScheduleResponse, &lessons, dateSelection)
+	httpClient.parseDateSelection(dateSelection, &getScheduleResponse, &lessons)
 
 	if len(lessons) == 0 {
 		getScheduleResponse = *addNoLessonsMsg(&getScheduleResponse)
@@ -101,10 +105,11 @@ func (httpClient *HttpClient) parseWeekLessons(htmlDocument *goquery.Document, f
 
 		if httpClient.isNilSelection(dateSelection) {
 			getScheduleResponse = *addNotFoundLessonsMsg(&getScheduleResponse)
+			log.Info("Html tag not found")
 			continue
 		}
 
-		httpClient.parseDateSelection(&getScheduleResponse, &lessons, dateSelection)
+		httpClient.parseDateSelection(dateSelection, &getScheduleResponse, &lessons)
 
 		if len(lessons) == 0 {
 			getScheduleResponse = *addNoLessonsMsg(&getScheduleResponse)
@@ -113,14 +118,13 @@ func (httpClient *HttpClient) parseWeekLessons(htmlDocument *goquery.Document, f
 		}
 		getScheduleResponse = *addNextDayMsg(&getScheduleResponse)
 	}
-
 	return &getScheduleResponse, nil
 }
 
 func (httpClient *HttpClient) parseDateSelection(
+	dateSelection *goquery.Selection,
 	getScheduleResponse *GetScheduleResponse,
-	lessons *[]string,
-	dateSelection *goquery.Selection) {
+	lessons *[]string) {
 
 	var (
 		startTime       string // Начало пары
@@ -157,13 +161,11 @@ func (httpClient *HttpClient) parseDateSelection(
 func (httpClient *HttpClient) getHtmlDocument(groupExternalId string) (*goquery.Document, error) {
 	response, err := httpClient.makeRequest(groupExternalId)
 	if err != nil {
-		//httpError := fmt.Sprint("Ошибка: превышено время ожидания от сервера")
 		return nil, err
 	}
 
 	responseBody, err := httpClient.getResponseBody(response)
 	if err != nil {
-		//httpError := fmt.Sprint("Ошибка: превышено время ожидания от сервера")
 		return nil, err
 	}
 
@@ -201,7 +203,6 @@ func (httpClient *HttpClient) createHtmlDocument(responseBody io.Reader) (*goque
 			"error":        err,
 			"func":         "createHtmlDocument",
 		}).Error("Data cannot be parsed as html")
-
 		return nil, err
 	}
 	return document, nil
@@ -224,11 +225,7 @@ func (httpClient *HttpClient) parseDate(htmlDocument *goquery.Document, date tim
 }
 
 func (httpClient *HttpClient) isNilSelection(selection *goquery.Selection) bool {
-	if selection == nil {
-		log.Info("Html tag not found")
-		return true
-	}
-	return false
+	return selection == nil
 }
 
 func addNotFoundLessonsMsg(scheduleResponse *GetScheduleResponse) *GetScheduleResponse {
