@@ -37,7 +37,7 @@ func NewScheduleStorage() *ScheduleStorage {
 }
 
 func (s *ScheduleStorage) GetLessons(groupId string, from time.Time, to time.Time) ([]*Lesson, error) {
-	dateString, err := xtimeconv.FromTimeToDateString(from, to)
+	dateString, err := xtimeconv.FromTimeRangeToDateString(from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (s *ScheduleStorage) GetLessons(groupId string, from time.Time, to time.Tim
 }
 
 func (s *ScheduleStorage) SaveLessons(groupId string, from time.Time, to time.Time, lessons []*Lesson) error {
-	dateString, err := xtimeconv.FromTimeToDateString(from, to)
+	dateString, err := xtimeconv.FromTimeRangeToDateString(from, to)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (s *ScheduleStorage) SaveLessons(groupId string, from time.Time, to time.Ti
 }
 
 func (s *ScheduleStorage) setExpireTime(schedule *Schedule, from time.Time, to time.Time) error {
-	dateString, err := xtimeconv.FromTimeToDateString(from, to)
+	dateString, err := xtimeconv.FromTimeRangeToDateString(from, to)
 	if err != nil {
 		return err
 	}
@@ -94,19 +94,19 @@ func (s *ScheduleStorage) setExpireTime(schedule *Schedule, from time.Time, to t
 func (s *ScheduleStorage) setExpireTimeImpl(schedule *Schedule, dateString string, date time.Time) {
 	switch dateString {
 	case "Today":
-		tomorrowExpire := date.Add(24 * time.Hour)
-		schedule.ExpireTime = tomorrowExpire
+		tomorrowExpireDate := date.Add(24 * time.Hour)
+		schedule.ExpireTime = tomorrowExpireDate
 	case "Tomorrow":
-		tomorrowExpire := date
-		schedule.ExpireTime = tomorrowExpire
+		tomorrowExpireDate := date
+		schedule.ExpireTime = tomorrowExpireDate
 	case "Week":
 		// date is equals to sunday of the current week
-		nextMondayExpire := date.Add(24 * time.Hour)
-		schedule.ExpireTime = nextMondayExpire
+		nextMondayExpireDate := date.Add(24 * time.Hour)
+		schedule.ExpireTime = nextMondayExpireDate
 	default:
 		// date is equals to sunday of the next week
-		nextMondayExpire := date.Add(-6 * 24 * time.Hour)
-		schedule.ExpireTime = nextMondayExpire
+		nextMondayExpireDate := date.Add(-6 * 24 * time.Hour)
+		schedule.ExpireTime = nextMondayExpireDate
 	}
 }
 
@@ -119,7 +119,7 @@ func (s *ScheduleStorage) isScheduleOutdated(scheduleExpireTime time.Time) error
 	currentDate := time.Now().In(novosibirsk).Format("02.01")
 	if currentDate == scheduleExpireTime.Format("02.01") {
 		log.Printf("schedule is outdated: %s", scheduleExpireTime.Format("02.01"))
-		return errors.New("scheduleExpireTime is outdated")
+		return errors.New("schedule is outdated")
 	}
 	return nil
 }

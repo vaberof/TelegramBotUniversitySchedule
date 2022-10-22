@@ -80,7 +80,7 @@ func (s *ScheduleService) fromGetScheduleRespToDomainSchedule(getScheduleRespons
 
 	daySchedule := s.respLessonsToDomainDaySchedule(getScheduleResponse.Lessons)
 
-	dateString, err := xtimeconv.FromTimeToDateString(from, to)
+	dateString, err := xtimeconv.FromTimeRangeToDateString(from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (s *ScheduleService) storageLessonsToDomainSchedule(storageLessons []*stora
 
 	daySchedule := s.storageLessonsToDomainDaySchedule(storageLessons)
 
-	strDate, err := xtimeconv.FromTimeToDateString(from, to)
+	strDate, err := xtimeconv.FromTimeRangeToDateString(from, to)
 	if err != nil {
 		return nil, err
 	}

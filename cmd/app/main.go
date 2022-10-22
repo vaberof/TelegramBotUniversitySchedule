@@ -23,19 +23,6 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	botKeyboardMarkup := newBotKeyboardMarkup()
-
-	botConfig := configs.NewBotConfig(os.Getenv("token"))
-	bot := newBot(botConfig)
-
-	botUpdatesChannel := tgbotapi.NewUpdate(0)
-	botUpdatesChannel.Timeout = 60
-
-	updates := bot.GetUpdatesChan(botUpdatesChannel)
-
-	messageStorage := message.NewMessageStorage()
-	messageService := message.NewMessageService(messageStorage)
-
 	httpClientConfig := configs.NewHttpClientConfig(
 		viper.GetString("server.host"),
 		time.Duration(viper.GetInt("server.timeout"))*time.Second)
@@ -48,7 +35,19 @@ func main() {
 	scheduleStorage := domain.NewScheduleStorage()
 	scheduleService := domain.NewScheduleService(scheduleApi, scheduleStorage)
 
+	messageStorage := message.NewMessageStorage()
+	messageService := message.NewMessageService(messageStorage)
+
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageService)
+
+	botKeyboardMarkup := newBotKeyboardMarkup()
+	botConfig := configs.NewBotConfig(os.Getenv("token"))
+	bot := newBot(botConfig)
+
+	botUpdatesChannel := tgbotapi.NewUpdate(0)
+	botUpdatesChannel.Timeout = 60
+
+	updates := bot.GetUpdatesChan(botUpdatesChannel)
 
 	for update := range updates {
 		if telegramHandler.CommandReceived(update) {
