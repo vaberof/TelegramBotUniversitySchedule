@@ -41,6 +41,7 @@ func main() {
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageService)
 
 	botKeyboardMarkup := newBotKeyboardMarkup()
+
 	botConfig := configs.NewBotConfig(os.Getenv("token"))
 	bot := newBot(botConfig)
 
@@ -73,7 +74,7 @@ func newBot(config *configs.BotConfig) *tgbotapi.BotAPI {
 
 	log.WithFields(log.Fields{
 		"bot": bot.Self.UserName,
-	}).Info("Bot is authorized")
+	}).Info("BotConfig is authorized")
 
 	return bot
 }
