@@ -3,7 +3,6 @@ package telegram
 import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/message"
 	domain "github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage"
 	"time"
 )
 
@@ -12,8 +11,8 @@ type ScheduleReceiver interface {
 }
 
 type MessageReceiverSaver interface {
-	GetMessage(chatId int64) (*storage.Message, error)
-	SaveMessage(chatId int64, message string)
+	GetMessage(chatId int64) (*string, error)
+	SaveMessage(chatId int64, text string) error
 }
 
 type TelegramHandler struct {

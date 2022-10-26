@@ -10,7 +10,13 @@ func (h *TelegramHandler) HandleNewMessage(bot *tgbotapi.BotAPI, update tgbotapi
 	inputMessageText := responseMessage.Text
 	chatId := responseMessage.ChatID
 
-	h.MessageReceiverSaver.SaveMessage(chatId, inputMessageText)
+	err := h.MessageReceiverSaver.SaveMessage(chatId, inputMessageText)
+	if err != nil {
+		log.Error("cannot save input message, error: ", err.Error())
+		responseMessage.Text = err.Error()
+		bot.Send(responseMessage)
+		return
+	}
 
 	responseMessage.ReplyMarkup = keyboard
 	bot.Send(responseMessage)

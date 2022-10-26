@@ -1,7 +1,5 @@
 package message
 
-import "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage"
-
 type MessageService struct {
 	messageStorage *MessageStorage
 }
@@ -12,7 +10,7 @@ func NewMessageService(messageStorage *MessageStorage) *MessageService {
 	}
 }
 
-func (s *MessageService) GetMessage(chatId int64) (*storage.Message, error) {
+func (s *MessageService) GetMessage(chatId int64) (*string, error) {
 	message, err := s.messageStorage.GetMessage(chatId)
 	if err != nil {
 		return nil, err
@@ -20,6 +18,6 @@ func (s *MessageService) GetMessage(chatId int64) (*storage.Message, error) {
 	return message, nil
 }
 
-func (s *MessageService) SaveMessage(chatId int64, message string) {
-	s.messageStorage.SaveMessage(chatId, message)
+func (s *MessageService) SaveMessage(chatId int64, text string) error {
+	return s.messageStorage.SaveMessage(chatId, text)
 }

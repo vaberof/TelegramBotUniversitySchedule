@@ -10,6 +10,10 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/message"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
 	infra "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/integration/unisite"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/grouppg"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/messagepg"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/schedulepg"
 	"os"
 	"time"
 )
@@ -23,27 +27,42 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
+	db, err := postgres.NewPostgresDb(&postgres.Config{
+		Host:     viper.GetString("db.host"),
+		Port:     viper.GetString("db.port"),
+		Name:     viper.GetString("db.name"),
+		User:     viper.GetString("db.user"),
+		Password: os.Getenv("db_password"),
+	})
+	if err != nil {
+		log.Fatalf("cannot connect to database %s", err.Error())
+	}
+
+	err = db.AutoMigrate(&grouppg.Group{}, &messagepg.Message{}, &schedulepg.Schedule{}, &schedulepg.Lesson{})
+	if err != nil {
+		log.Fatalf("cannot create groups in db %s", err.Error())
+	}
+
 	httpClientConfig := configs.NewHttpClientConfig(
 		viper.GetString("server.host"),
 		time.Duration(viper.GetInt("server.timeout"))*time.Second)
 
 	getScheduleResponseApi := infra.NewGetScheduleResponseApi(httpClientConfig)
-	groupStorage := infra.NewGroupStorage()
+	groupStorage := infra.NewGroupStorage(db)
 	getScheduleResponseService := infra.NewGetScheduleResponseService(getScheduleResponseApi, groupStorage)
 
 	scheduleApi := domain.NewScheduleApi(getScheduleResponseService)
-	scheduleStorage := domain.NewScheduleStorage()
+	scheduleStorage := domain.NewScheduleStorage(db)
 	scheduleService := domain.NewScheduleService(scheduleApi, scheduleStorage)
 
-	messageStorage := message.NewMessageStorage()
+	messageStorage := message.NewMessageStorage(db)
 	messageService := message.NewMessageService(messageStorage)
 
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageService)
 
-	botKeyboardMarkup := newBotKeyboardMarkup()
-
 	botConfig := configs.NewBotConfig(os.Getenv("token"))
 	bot := newBot(botConfig)
+	botKeyboardMarkup := newBotKeyboardMarkup()
 
 	botUpdatesChannel := tgbotapi.NewUpdate(0)
 	botUpdatesChannel.Timeout = 60
@@ -74,8 +93,7 @@ func newBot(config *configs.BotConfig) *tgbotapi.BotAPI {
 
 	log.WithFields(log.Fields{
 		"bot": bot.Self.UserName,
-	}).Info("BotConfig is authorized")
-
+	}).Info("ssugt_timetable_bot is authorized")
 	return bot
 }
 

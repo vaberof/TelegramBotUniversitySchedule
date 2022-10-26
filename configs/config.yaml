@@ -1,3 +1,9 @@
 server:
   host: https://rasp.sgugit.ru/
   timeout: 3
+
+db:
+  host: "localhost"
+  port: "5432"
+  name: "schedule_tg_bot"
+  user: "postgres"

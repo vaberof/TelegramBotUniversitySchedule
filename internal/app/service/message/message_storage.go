@@ -1,13 +1,16 @@
 package message
 
-import "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage"
+import (
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/messagepg"
+	"gorm.io/gorm"
+)
 
 type MessageReceiver interface {
-	GetMessage(chatId int64) (*storage.Message, error)
+	GetMessage(chatId int64) (*string, error)
 }
 
 type MessageSaver interface {
-	SaveMessage(chatId int64, message string)
+	SaveMessage(chatId int64, message string) error
 }
 
 type MessageReceiverSaver interface {
@@ -19,8 +22,8 @@ type MessageStorage struct {
 	MessageReceiverSaver
 }
 
-func NewMessageStorage() *MessageStorage {
+func NewMessageStorage(db *gorm.DB) *MessageStorage {
 	return &MessageStorage{
-		MessageReceiverSaver: storage.NewMessageStorage(),
+		MessageReceiverSaver: messagepg.NewMessageStoragePostgres(db),
 	}
 }
