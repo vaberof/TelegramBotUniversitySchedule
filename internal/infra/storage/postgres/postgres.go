@@ -27,6 +27,5 @@ func NewPostgresDb(config *Config) (*gorm.DB, error) {
 
 		return nil, err
 	}
-
 	return db, nil
 }

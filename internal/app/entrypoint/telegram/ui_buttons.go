@@ -3,8 +3,10 @@ package telegram
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	log "github.com/sirupsen/logrus"
+	domain "github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/xstrconv"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtime"
+	"time"
 )
 
 const errorMessageToTelegram string = "Ошибка: невозможно получить расписание"
@@ -15,40 +17,85 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 	keyboard tgbotapi.InlineKeyboardMarkup) {
 
 	responseCallback := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data)
-	inputTelegramButtonDate := responseCallback.Text
-
 	responseCallback.ParseMode = "markdown"
 
-	log.WithFields(log.Fields{
-		"username": update.SentFrom(),
-		"button":   inputTelegramButtonDate,
-	}).Info("User requested a schedule")
+	inputTelegramButtonDate := responseCallback.Text
 
-	inputTelegramMessage, err := h.GetMessage(responseCallback.ChatID)
-	if inputTelegramMessage == nil || err != nil {
-		responseCallback.Text = "Введите номер группы"
-		bot.Send(responseCallback)
+	log.WithFields(log.Fields{"username": update.SentFrom(), "button": inputTelegramButtonDate}).
+		Info("User requested a schedule")
+
+	inputTelegramMessage := h.getMessageImpl(responseCallback.ChatID, responseCallback, bot)
+	if inputTelegramMessage == nil {
+		return
+	}
+
+	fromDate, toDate, err := h.parseDatesRangeImpl(inputTelegramButtonDate, responseCallback, bot)
+	if err != nil {
 		return
 	}
 
 	groupId := *inputTelegramMessage
-	groupIdString := string(groupId)
+
+	schedule, err := h.getScheduleImpl(groupId, fromDate, toDate, responseCallback, bot)
+	if err != nil {
+		return
+	}
+
+	scheduleString, err := h.scheduleToStringImpl(groupId, inputTelegramButtonDate, schedule, responseCallback, bot)
+	if scheduleString == nil || err != nil {
+		return
+	}
+
+	responseCallback.Text = *scheduleString
+	responseCallback.ReplyMarkup = keyboard
+
+	bot.Send(responseCallback)
+}
+
+func (h *TelegramHandler) MenuButtonPressed(callBackQuery tgbotapi.Update) bool {
+	return callBackQuery.CallbackQuery != nil
+}
+
+func (h *TelegramHandler) getMessageImpl(chatId int64, responseCallback tgbotapi.MessageConfig, bot *tgbotapi.BotAPI) *string {
+	inputTelegramMessage, err := h.GetMessage(chatId)
+	if inputTelegramMessage == nil || err != nil {
+		responseCallback.Text = "Введите номер группы"
+		bot.Send(responseCallback)
+		return nil
+	}
+	return inputTelegramMessage
+}
+
+func (h *TelegramHandler) parseDatesRangeImpl(
+	inputTelegramButtonDate string,
+	responseCallback tgbotapi.MessageConfig,
+	bot *tgbotapi.BotAPI) (time.Time, time.Time, error) {
 
 	fromDate, toDate, err := xtime.ParseDatesRange(inputTelegramButtonDate)
 	if err != nil {
+
 		log.WithFields(log.Fields{
 			"fromDate": fromDate,
 			"toDate":   toDate,
 			"func":     "HandleMenuButtonPress",
-			"error":    err.Error(),
-		}).Error("Cannot parse dates range")
+			"error":    err.Error()}).
+			Error("Cannot parse dates range")
 
 		responseCallback.Text = errorMessageToTelegram
 		bot.Send(responseCallback)
-		return
+		return time.Time{}, time.Time{}, err
 	}
+	return fromDate, toDate, nil
+}
 
-	schedule, err := h.ScheduleReceiver.GetSchedule(groupIdString, fromDate, toDate)
+func (h *TelegramHandler) getScheduleImpl(
+	groupId string,
+	from time.Time,
+	to time.Time,
+	responseCallback tgbotapi.MessageConfig,
+	bot *tgbotapi.BotAPI) (*domain.Schedule, error) {
+
+	schedule, err := h.ScheduleReceiver.GetSchedule(groupId, from, to)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"schedule": schedule,
@@ -58,31 +105,29 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 
 		responseCallback.Text = err.Error()
 		bot.Send(responseCallback)
-		return
+		return nil, err
 	}
+	return schedule, nil
+}
 
-	scheduleString, err := xstrconv.ScheduleToString(groupIdString, inputTelegramButtonDate, schedule)
+func (h *TelegramHandler) scheduleToStringImpl(
+	groupId string,
+	inputTelegramButtonDate string,
+	schedule *domain.Schedule,
+	responseCallback tgbotapi.MessageConfig,
+	bot *tgbotapi.BotAPI) (*string, error) {
+
+	scheduleString, err := xstrconv.ScheduleToString(groupId, inputTelegramButtonDate, schedule)
 	if scheduleString == nil || err != nil {
 		log.WithFields(log.Fields{
 			"schedule string": scheduleString,
-			"error":           err.Error(),
+			"error":           err,
 			"func":            "HandleMenuButtonPress",
 		}).Error("Cannot get schedule string")
 
 		responseCallback.Text = errorMessageToTelegram
 		bot.Send(responseCallback)
-		return
+		return nil, err
 	}
-
-	responseCallback.Text = *scheduleString
-	responseCallback.ReplyMarkup = keyboard
-
-	_, err = bot.Send(responseCallback)
-	if err != nil {
-		log.Panic(err.Error())
-	}
-}
-
-func (h *TelegramHandler) MenuButtonPressed(callBackQuery tgbotapi.Update) bool {
-	return callBackQuery.CallbackQuery != nil
+	return scheduleString, nil
 }

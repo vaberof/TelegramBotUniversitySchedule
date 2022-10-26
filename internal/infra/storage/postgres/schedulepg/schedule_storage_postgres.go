@@ -65,12 +65,21 @@ func (s *ScheduleStoragePostgres) SaveLessons(groupId string, from time.Time, to
 		return nil
 	}
 
+	err = s.saveLessonsImpl(groupId, dateString, from, to, lessons)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ScheduleStoragePostgres) saveLessonsImpl(groupId string, dateString string, from time.Time, to time.Time, lessons []*Lesson) error {
 	var schedule Schedule
+
 	schedule.GroupId = groupId
 	schedule.Date = dateString
 	schedule.Lessons = lessons
 
-	err = s.setExpireTime(&schedule, from, to)
+	err := s.setExpireTime(&schedule, from, to)
 	if err != nil {
 		return err
 	}
@@ -79,6 +88,8 @@ func (s *ScheduleStoragePostgres) SaveLessons(groupId string, from time.Time, to
 	if err != nil {
 		return err
 	}
+
+	log.Info("schedule cached")
 	return nil
 }
 
@@ -161,7 +172,7 @@ func (s *ScheduleStoragePostgres) isScheduleOutdated(scheduleExpireTime time.Tim
 
 	currentDate := time.Now().In(novosibirsk).Format("02.01")
 	if currentDate >= scheduleExpireTime.Format("02.01") {
-		log.Info("schedule is outdated:", scheduleExpireTime.Format("02.01"))
+		log.Info("schedule is outdated: ", scheduleExpireTime.Format("02.01"))
 		return errors.New("schedule is outdated")
 	}
 	return nil
