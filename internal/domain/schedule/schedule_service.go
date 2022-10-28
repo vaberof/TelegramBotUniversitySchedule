@@ -74,7 +74,8 @@ func (s *ScheduleService) cacheLessons(groupId string, lessons []*infra.Lesson, 
 	return nil
 }
 
-func (s *ScheduleService) fromGetScheduleRespToDomainSchedule(getScheduleResponse *infra.GetScheduleResponse,
+func (s *ScheduleService) fromGetScheduleRespToDomainSchedule(
+	getScheduleResponse *infra.GetScheduleResponse,
 	from time.Time,
 	to time.Time) (*Schedule, error) {
 
@@ -139,7 +140,8 @@ func (s *ScheduleService) respLessonToStorageLesson(respLesson *infra.Lesson) *s
 	return &lesson
 }
 
-func (s *ScheduleService) storageLessonsToDomainSchedule(storageLessons []*schedulepg.Lesson,
+func (s *ScheduleService) storageLessonsToDomainSchedule(
+	storageLessons []*schedulepg.Lesson,
 	from time.Time,
 	to time.Time) (*Schedule, error) {
 
