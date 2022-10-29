@@ -2,7 +2,6 @@ package main
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/vaberof/TelegramBotUniversitySchedule/configs"
@@ -22,11 +21,7 @@ func main() {
 	if err := initConfig(); err != nil {
 		log.Fatalf("failed initializating config: %s", err.Error())
 	}
-
-	if err := godotenv.Load("../../.env"); err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
+	
 	db, err := postgres.NewPostgresDb(&postgres.Config{
 		Host:     viper.GetString("db.host"),
 		Port:     viper.GetString("db.port"),
