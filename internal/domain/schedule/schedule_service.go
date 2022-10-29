@@ -3,20 +3,20 @@ package domain
 import (
 	log "github.com/sirupsen/logrus"
 	infra "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/integration/unisite"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/schedulepg"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtimeconv"
 	"time"
 )
 
 type ScheduleService struct {
-	getScheduleResponse *GetScheduleResponse
-	scheduleStorage     *ScheduleStorage
+	scheduleApi     *ScheduleApi
+	scheduleStorage *ScheduleStorage
 }
 
-func NewScheduleService(scheduleApi *GetScheduleResponse, scheduleStorage *ScheduleStorage) *ScheduleService {
+func NewScheduleService(scheduleApi *ScheduleApi, scheduleStorage *ScheduleStorage) *ScheduleService {
 	return &ScheduleService{
-		getScheduleResponse: scheduleApi,
-		scheduleStorage:     scheduleStorage,
+		scheduleApi:     scheduleApi,
+		scheduleStorage: scheduleStorage,
 	}
 }
 
@@ -32,8 +32,7 @@ func (s *ScheduleService) getScheduleImpl(groupId string, from time.Time, to tim
 			return nil, err
 		}
 
-		err = s.cacheLessons(groupId, getScheduleResponse.Lessons, from, to)
-		if err != nil {
+		if err = s.cacheLessons(groupId, getScheduleResponse.Lessons, from, to); err != nil {
 			return nil, err
 		}
 
@@ -54,7 +53,7 @@ func (s *ScheduleService) getScheduleImpl(groupId string, from time.Time, to tim
 }
 
 func (s *ScheduleService) callScheduleApi(groupId string, from time.Time, to time.Time) (*infra.GetScheduleResponse, error) {
-	getScheduleResponse, err := s.getScheduleResponse.GetSchedule(groupId, from, to)
+	getScheduleResponse, err := s.scheduleApi.GetSchedule(groupId, from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -75,13 +74,14 @@ func (s *ScheduleService) cacheLessons(groupId string, lessons []*infra.Lesson, 
 	return nil
 }
 
-func (s *ScheduleService) fromGetScheduleRespToDomainSchedule(getScheduleResponse *infra.GetScheduleResponse,
+func (s *ScheduleService) fromGetScheduleRespToDomainSchedule(
+	getScheduleResponse *infra.GetScheduleResponse,
 	from time.Time,
 	to time.Time) (*Schedule, error) {
 
 	daySchedule := s.respLessonsToDomainDaySchedule(getScheduleResponse.Lessons)
 
-	dateString, err := xtimeconv.FromTimeToDateString(from, to)
+	dateString, err := xtimeconv.FromTimeRangeToDateString(from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -117,8 +117,8 @@ func (s *ScheduleService) respLessonToDomainLesson(respLesson *infra.Lesson) *Le
 	return &lesson
 }
 
-func (s *ScheduleService) respLessonsToStorageLessons(respLessons []*infra.Lesson) ([]*storage.Lesson, error) {
-	var lessons []*storage.Lesson
+func (s *ScheduleService) respLessonsToStorageLessons(respLessons []*infra.Lesson) ([]*schedulepg.Lesson, error) {
+	var lessons []*schedulepg.Lesson
 
 	for i := 0; i < len(respLessons); i++ {
 		lesson := s.respLessonToStorageLesson(respLessons[i])
@@ -127,8 +127,8 @@ func (s *ScheduleService) respLessonsToStorageLessons(respLessons []*infra.Lesso
 	return lessons, nil
 }
 
-func (s *ScheduleService) respLessonToStorageLesson(respLesson *infra.Lesson) *storage.Lesson {
-	var lesson storage.Lesson
+func (s *ScheduleService) respLessonToStorageLesson(respLesson *infra.Lesson) *schedulepg.Lesson {
+	var lesson schedulepg.Lesson
 
 	lesson.Title = respLesson.Title
 	lesson.StartTime = respLesson.StartTime
@@ -140,13 +140,14 @@ func (s *ScheduleService) respLessonToStorageLesson(respLesson *infra.Lesson) *s
 	return &lesson
 }
 
-func (s *ScheduleService) storageLessonsToDomainSchedule(storageLessons []*storage.Lesson,
+func (s *ScheduleService) storageLessonsToDomainSchedule(
+	storageLessons []*schedulepg.Lesson,
 	from time.Time,
 	to time.Time) (*Schedule, error) {
 
 	daySchedule := s.storageLessonsToDomainDaySchedule(storageLessons)
 
-	strDate, err := xtimeconv.FromTimeToDateString(from, to)
+	strDate, err := xtimeconv.FromTimeRangeToDateString(from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +158,7 @@ func (s *ScheduleService) storageLessonsToDomainSchedule(storageLessons []*stora
 	return &schedule, nil
 }
 
-func (s *ScheduleService) storageLessonsToDomainDaySchedule(storageLessons []*storage.Lesson) *DaySchedule {
+func (s *ScheduleService) storageLessonsToDomainDaySchedule(storageLessons []*schedulepg.Lesson) *DaySchedule {
 	var daySchedule DaySchedule
 
 	for i := 0; i < len(storageLessons); i++ {
@@ -167,7 +168,7 @@ func (s *ScheduleService) storageLessonsToDomainDaySchedule(storageLessons []*st
 	return &daySchedule
 }
 
-func (s *ScheduleService) storageLessonToDomainLesson(storageLesson *storage.Lesson) *Lesson {
+func (s *ScheduleService) storageLessonToDomainLesson(storageLesson *schedulepg.Lesson) *Lesson {
 	var lesson Lesson
 
 	lesson.Title = storageLesson.Title

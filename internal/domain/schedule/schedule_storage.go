@@ -1,16 +1,17 @@
 package domain
 
 import (
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/schedulepg"
+	"gorm.io/gorm"
 	"time"
 )
 
 type LessonsReceiver interface {
-	GetLessons(groupId string, from time.Time, to time.Time) ([]*storage.Lesson, error)
+	GetLessons(groupId string, from time.Time, to time.Time) ([]*schedulepg.Lesson, error)
 }
 
 type LessonsSaver interface {
-	SaveLessons(groupId string, from time.Time, to time.Time, lessons []*storage.Lesson) error
+	SaveLessons(groupId string, from time.Time, to time.Time, lessons []*schedulepg.Lesson) error
 }
 
 type LessonsReceiverSaver interface {
@@ -22,8 +23,8 @@ type ScheduleStorage struct {
 	LessonsReceiverSaver
 }
 
-func NewScheduleStorage() *ScheduleStorage {
+func NewScheduleStorage(db *gorm.DB) *ScheduleStorage {
 	return &ScheduleStorage{
-		LessonsReceiverSaver: storage.NewScheduleStorage(),
+		LessonsReceiverSaver: schedulepg.NewScheduleStoragePostgres(db),
 	}
 }

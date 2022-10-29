@@ -37,10 +37,10 @@ func (s *GetScheduleResponse) addLesson(title, startTime, finishTime, lessonType
 }
 
 func (httpClient *HttpClient) GetSchedule(groupExternalId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
-	return httpClient.getGetScheduleResponse(groupExternalId, from, to)
+	return httpClient.getScheduleImpl(groupExternalId, from, to)
 }
 
-func (httpClient *HttpClient) getGetScheduleResponse(groupExternalId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
+func (httpClient *HttpClient) getScheduleImpl(groupExternalId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
 	htmlDocument, err := httpClient.getHtmlDocument(groupExternalId)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (httpClient *HttpClient) getGetScheduleResponse(groupExternalId string, fro
 }
 
 func (httpClient *HttpClient) parseLessons(htmlDocument *goquery.Document, from time.Time, to time.Time) (*GetScheduleResponse, error) {
-	dateString, err := xtimeconv.FromTimeToDateString(from, to)
+	dateString, err := xtimeconv.FromTimeRangeToDateString(from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (httpClient *HttpClient) parseDayLessons(htmlDocument *goquery.Document, to
 	var getScheduleResponse GetScheduleResponse
 	var lessons []string
 
-	httpClient.parseDateSelection(dateSelection, &getScheduleResponse, &lessons)
+	httpClient.parseDateSelectionWithLessons(dateSelection, &getScheduleResponse, &lessons)
 
 	if len(lessons) == 0 {
 		getScheduleResponse = *addNoLessonsMsg(&getScheduleResponse)
@@ -109,7 +109,7 @@ func (httpClient *HttpClient) parseWeekLessons(htmlDocument *goquery.Document, f
 			continue
 		}
 
-		httpClient.parseDateSelection(dateSelection, &getScheduleResponse, &lessons)
+		httpClient.parseDateSelectionWithLessons(dateSelection, &getScheduleResponse, &lessons)
 
 		if len(lessons) == 0 {
 			getScheduleResponse = *addNoLessonsMsg(&getScheduleResponse)
@@ -121,7 +121,7 @@ func (httpClient *HttpClient) parseWeekLessons(htmlDocument *goquery.Document, f
 	return &getScheduleResponse, nil
 }
 
-func (httpClient *HttpClient) parseDateSelection(
+func (httpClient *HttpClient) parseDateSelectionWithLessons(
 	dateSelection *goquery.Selection,
 	getScheduleResponse *GetScheduleResponse,
 	lessons *[]string) {

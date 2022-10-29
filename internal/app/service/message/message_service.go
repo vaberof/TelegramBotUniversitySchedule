@@ -1,25 +1,23 @@
 package message
 
-import "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage"
-
 type MessageService struct {
-	messageStorageApi *MessageStorage
+	messageStorage *MessageStorage
 }
 
 func NewMessageService(messageStorage *MessageStorage) *MessageService {
 	return &MessageService{
-		messageStorageApi: messageStorage,
+		messageStorage: messageStorage,
 	}
 }
 
-func (s *MessageService) GetMessage(chatId int64) (*storage.Message, error) {
-	message, err := s.messageStorageApi.GetMessage(chatId)
+func (s *MessageService) GetMessage(chatId int64) (*string, error) {
+	message, err := s.messageStorage.GetMessage(chatId)
 	if err != nil {
 		return nil, err
 	}
 	return message, nil
 }
 
-func (s *MessageService) SaveMessage(chatId int64, message string) {
-	s.messageStorageApi.SaveMessage(chatId, message)
+func (s *MessageService) SaveMessage(chatId int64, text string) error {
+	return s.messageStorage.SaveMessage(chatId, text)
 }
