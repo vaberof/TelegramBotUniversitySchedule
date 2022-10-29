@@ -31,7 +31,7 @@ func main() {
 		Host:     viper.GetString("db.host"),
 		Port:     viper.GetString("db.port"),
 		Name:     viper.GetString("db.name"),
-		User:     viper.GetString("db.user"),
+		User:     os.Getenv("db_username"),
 		Password: os.Getenv("db_password"),
 	})
 	if err != nil {
