@@ -10,7 +10,6 @@ type GroupStoragePostgres struct {
 }
 
 func NewGroupStoragePostgres(db *gorm.DB) *GroupStoragePostgres {
-	initGroups(db)
 	return &GroupStoragePostgres{db: db}
 }
 
@@ -27,11 +26,78 @@ func (g *GroupStoragePostgres) GetGroupExternalId(groupId string) *string {
 	return nil
 }
 
-func initGroups(db *gorm.DB) {
-	db.Table("groups").Where("group_id > 0").Delete(&Group{})
-
-	err := db.Create(&studyGroups).Error
-	if err != nil {
-		log.Fatal("cannot create studyGroups in db ", err.Error())
+func (g *GroupStoragePostgres) CreateGroup(id string, name string, externalId string) error {
+	_, err := g.getGroup(id, name, externalId)
+	if err == nil {
+		log.Error("group already exists in database, error: ", err)
+		return err
 	}
+
+	var group Group
+
+	group.Id = id
+	group.Name = name
+	group.ExternalId = externalId
+
+	err = g.db.Table("groups").Create(&group).Error
+	if err != nil {
+		log.Error("cannot create group in database, error: ", err)
+		return err
+	}
+	log.Info("created the group in database")
+	return nil
+}
+
+func (g *GroupStoragePostgres) UpdateGroup(
+	id string,
+	name string,
+	externalId string,
+	newId string,
+	newName string,
+	newExternalId string) error {
+
+	group, err := g.getGroup(id, name, externalId)
+	if err != nil {
+		log.Error("cannot update group in database, error: ", err)
+		return err
+	}
+
+	group.Id = newId
+	group.Name = newName
+	group.ExternalId = newExternalId
+
+	err = g.db.Table("groups").Save(&group).Error
+	if err != nil {
+		log.Error("cannot save group in database, error: ", err)
+		return err
+	}
+	log.Info("group updated in database")
+	return nil
+}
+
+func (g *GroupStoragePostgres) DeleteGroup(id string, name string, externalId string) error {
+	group, err := g.getGroup(id, name, externalId)
+	if err != nil {
+		return err
+	}
+
+	err = g.db.Table("groups").Delete(&group).Error
+	if err != nil {
+		log.Error("cannot delete group from database, error ", err)
+		return err
+	}
+	log.Info("group deleted from database")
+	return nil
+}
+
+func (g *GroupStoragePostgres) getGroup(id string, name string, externalId string) (*Group, error) {
+	var group Group
+
+	err := g.db.Table("groups").Where("id = ? AND name = ? AND external_id = ?", id, name, externalId).
+		First(&group).Error
+	if err != nil {
+		log.Error("cannot find group in database, error: ", err)
+		return nil, err
+	}
+	return &group, nil
 }
