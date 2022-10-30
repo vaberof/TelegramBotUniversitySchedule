@@ -3,6 +3,6 @@ server:
   timeout: 3
 
 db:
-  host: "ec2-54-170-90-26.eu-west-1.compute.amazonaws.com"
+  host: "ec2-54-155-129-189.eu-west-1.compute.amazonaws.com"
   port: "5432"
-  name: "d87ok4o57o89b6"
+  name: "dd0npvt10ntlqn"
