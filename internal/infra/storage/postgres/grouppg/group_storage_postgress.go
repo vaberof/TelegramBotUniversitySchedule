@@ -1,6 +1,7 @@
 package grouppg
 
 import (
+	"errors"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -30,7 +31,7 @@ func (g *GroupStoragePostgres) CreateGroup(id string, name string, externalId st
 	_, err := g.getGroup(id, name, externalId)
 	if err == nil {
 		log.Error("group already exists in database, error: ", err)
-		return err
+		return errors.New("group already exists in database")
 	}
 
 	var group Group

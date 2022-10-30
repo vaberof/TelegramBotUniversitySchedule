@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/vaberof/TelegramBotUniversitySchedule/configs"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/entrypoint/telegram"
+	http "github.com/vaberof/TelegramBotUniversitySchedule/internal/app/http/handler"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/group"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/message"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
 	infra "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/integration/unisite"
@@ -60,6 +62,12 @@ func main() {
 
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageService)
 
+	groupStoragePostgres := group.NewGroupStoragePostgres(db)
+	groupStorageService := group.NewGroupStorageService(groupStoragePostgres)
+
+	httpHandler := http.NewHttpHandler(groupStorageService)
+	ginEngine := httpHandler.InitRoutes()
+
 	botConfig := configs.NewBotConfig(os.Getenv("token"))
 	bot := newBot(botConfig)
 	botKeyboardMarkup := newBotKeyboardMarkup()
@@ -68,6 +76,8 @@ func main() {
 	botUpdatesChannel.Timeout = 60
 
 	updates := bot.GetUpdatesChan(botUpdatesChannel)
+
+	go ginEngine.Run(":8080")
 
 	for update := range updates {
 		if telegramHandler.CommandReceived(update) {
