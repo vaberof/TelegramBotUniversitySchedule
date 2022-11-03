@@ -5,9 +5,6 @@ import "github.com/gin-gonic/gin"
 type UpdateGroupRequestBody struct {
 	Id            string `json:"id" binding:"required"`
 	Name          string `json:"name" binding:"required"`
-	ExternalId    string `json:"external_id" binding:"required"`
-	NewId         string `json:"new_id" binding:"required"`
-	NewName       string `json:"new_name" binding:"required"`
 	NewExternalId string `json:"new_external_id" binding:"required"`
 }
 
@@ -24,9 +21,6 @@ func (h *HttpHandler) UpdateGroup(c *gin.Context) {
 	err := h.GroupStorage.UpdateGroup(
 		groupReqBody.Id,
 		groupReqBody.Name,
-		groupReqBody.ExternalId,
-		groupReqBody.NewId,
-		groupReqBody.NewName,
 		groupReqBody.NewExternalId)
 
 	if err != nil {

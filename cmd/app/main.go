@@ -69,7 +69,9 @@ func main() {
 	ginEngine := httpHandler.InitRoutes()
 
 	botConfig := configs.NewBotConfig(os.Getenv("token"))
+	log.Printf("token is ", botConfig.Token)
 	bot := newBot(botConfig)
+
 	botKeyboardMarkup := newBotKeyboardMarkup()
 
 	botUpdatesChannel := tgbotapi.NewUpdate(0)
@@ -94,6 +96,7 @@ func main() {
 func newBot(config *configs.BotConfig) *tgbotapi.BotAPI {
 	token := config.Token
 	bot, err := tgbotapi.NewBotAPI(token)
+	log.Printf("bot: ", bot)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"bot":   bot.Self.UserName,

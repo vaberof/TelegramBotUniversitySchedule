@@ -3,9 +3,8 @@ package handler
 import "github.com/gin-gonic/gin"
 
 type DeleteGroupRequestBody struct {
-	Id         string `json:"id" binding:"required"`
-	Name       string `json:"name" binding:"required"`
-	ExternalId string `json:"external_id" binding:"required"`
+	Id   string `json:"id" binding:"required"`
+	Name string `json:"name" binding:"required"`
 }
 
 func (h *HttpHandler) DeleteGroup(c *gin.Context) {
@@ -18,7 +17,7 @@ func (h *HttpHandler) DeleteGroup(c *gin.Context) {
 		return
 	}
 
-	err := h.GroupStorage.DeleteGroup(groupReqBody.Id, groupReqBody.Name, groupReqBody.ExternalId)
+	err := h.GroupStorage.DeleteGroup(groupReqBody.Id, groupReqBody.Name)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": err.Error(),
