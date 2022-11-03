@@ -18,7 +18,7 @@ func (h *HttpHandler) UpdateGroup(c *gin.Context) {
 		return
 	}
 
-	err := h.GroupStorage.UpdateGroup(
+	err := h.GroupStorage.UpdateGroupExternalId(
 		groupReqBody.Id,
 		groupReqBody.Name,
 		groupReqBody.NewExternalId)

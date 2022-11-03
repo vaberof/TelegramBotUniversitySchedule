@@ -49,7 +49,7 @@ func (g *GroupStoragePostgres) CreateGroup(id string, name string, externalId st
 	return nil
 }
 
-func (g *GroupStoragePostgres) UpdateGroup(
+func (g *GroupStoragePostgres) UpdateGroupExternalId(
 	id string,
 	name string,
 	newExternalId string) error {

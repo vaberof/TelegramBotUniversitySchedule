@@ -10,6 +10,7 @@ import (
 	http "github.com/vaberof/TelegramBotUniversitySchedule/internal/app/http/handler"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/group"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/message"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/token"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
 	infra "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/integration/unisite"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres"
@@ -42,7 +43,7 @@ func main() {
 
 	err = db.AutoMigrate(&grouppg.Group{}, &messagepg.Message{}, &schedulepg.Schedule{}, &schedulepg.Lesson{})
 	if err != nil {
-		log.Fatalf("cannot create groups in db %s", err.Error())
+		log.Fatalf("cannot auto migrate models %s", err.Error())
 	}
 
 	httpClientConfig := configs.NewHttpClientConfig(
@@ -65,11 +66,12 @@ func main() {
 	groupStoragePostgres := group.NewGroupStoragePostgres(db)
 	groupStorageService := group.NewGroupStorageService(groupStoragePostgres)
 
-	httpHandler := http.NewHttpHandler(groupStorageService)
-	ginEngine := httpHandler.InitRoutes()
+	tokenService := token.NewTokenService(os.Getenv("bearer_token"))
+
+	httpHandler := http.NewHttpHandler(groupStorageService, tokenService)
+	router := httpHandler.InitRouter()
 
 	botConfig := configs.NewBotConfig(os.Getenv("token"))
-	log.Printf("token is ", botConfig.Token)
 	bot := newBot(botConfig)
 
 	botKeyboardMarkup := newBotKeyboardMarkup()
@@ -79,7 +81,7 @@ func main() {
 
 	updates := bot.GetUpdatesChan(botUpdatesChannel)
 
-	go ginEngine.Run(":8080")
+	go router.Run(":8080")
 
 	for update := range updates {
 		if telegramHandler.CommandReceived(update) {
@@ -96,7 +98,6 @@ func main() {
 func newBot(config *configs.BotConfig) *tgbotapi.BotAPI {
 	token := config.Token
 	bot, err := tgbotapi.NewBotAPI(token)
-	log.Printf("bot: ", bot)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"bot":   bot.Self.UserName,
