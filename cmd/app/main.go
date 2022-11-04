@@ -8,9 +8,9 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/configs"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/entrypoint/telegram"
 	http "github.com/vaberof/TelegramBotUniversitySchedule/internal/app/http/handler"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/auth"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/group"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/message"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/token"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
 	infra "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/integration/unisite"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres"
@@ -66,9 +66,9 @@ func main() {
 	groupStoragePostgres := group.NewGroupStoragePostgres(db)
 	groupStorageService := group.NewGroupStorageService(groupStoragePostgres)
 
-	tokenService := token.NewTokenService(os.Getenv("bearer_token"))
+	authService := auth.NewAuthService(os.Getenv("bearer_token"))
 
-	httpHandler := http.NewHttpHandler(groupStorageService, tokenService)
+	httpHandler := http.NewHttpHandler(groupStorageService, authService)
 	router := httpHandler.InitRouter()
 
 	botConfig := configs.NewBotConfig(os.Getenv("token"))

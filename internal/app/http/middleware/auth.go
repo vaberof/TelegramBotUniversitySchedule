@@ -1,11 +1,11 @@
-package auth
+package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/token"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/auth"
 )
 
-func TokenAuth(s token.TokenValidator) gin.HandlerFunc {
+func Auth(s auth.TokenValidator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		stringToken := c.GetHeader("Authorization")
 		if stringToken == "" {

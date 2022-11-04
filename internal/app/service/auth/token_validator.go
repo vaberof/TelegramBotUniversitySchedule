@@ -1,4 +1,4 @@
-package token
+package auth
 
 type TokenValidator interface {
 	ValidateToken(token string) error

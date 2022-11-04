@@ -2,9 +2,9 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/http/middleware/auth"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/http/middleware"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/auth"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/group"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/token"
 )
 
 type HttpHandler struct {
@@ -12,10 +12,10 @@ type HttpHandler struct {
 	TokenValidator
 }
 
-func NewHttpHandler(groupStorageService *group.GroupStorageService, tokenService *token.TokenService) *HttpHandler {
+func NewHttpHandler(groupStorageService *group.GroupStorageService, authService *auth.AuthService) *HttpHandler {
 	return &HttpHandler{
 		GroupStorage:   groupStorageService,
-		TokenValidator: tokenService,
+		TokenValidator: authService,
 	}
 }
 
@@ -23,7 +23,7 @@ func (h *HttpHandler) InitRouter() *gin.Engine {
 	router := gin.Default()
 
 	router.Group("/")
-	router.Use(auth.TokenAuth(h.TokenValidator))
+	router.Use(middleware.Auth(h.TokenValidator))
 	{
 		router.POST("/group", h.CreateGroup)
 		router.PUT("/group", h.UpdateGroup)
