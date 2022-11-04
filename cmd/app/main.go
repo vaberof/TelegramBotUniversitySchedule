@@ -7,10 +7,11 @@ import (
 	"github.com/spf13/viper"
 	"github.com/vaberof/TelegramBotUniversitySchedule/configs"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/entrypoint/telegram"
-	http "github.com/vaberof/TelegramBotUniversitySchedule/internal/app/http/handler"
+	xhttp "github.com/vaberof/TelegramBotUniversitySchedule/internal/app/http/handler"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/auth"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/group"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/message"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/schedule"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
 	infra "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/integration/unisite"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres"
@@ -58,17 +59,20 @@ func main() {
 	scheduleStorage := domain.NewScheduleStorage(db)
 	scheduleService := domain.NewScheduleService(scheduleApi, scheduleStorage)
 
-	messageStorage := message.NewMessageStorage(db)
-	messageService := message.NewMessageService(messageStorage)
+	messageStoragePostgres := messagepg.NewMessageStoragePostgres(db)
+	messageService := message.NewMessageService(messageStoragePostgres)
 
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageService)
 
-	groupStoragePostgres := group.NewGroupStoragePostgres(db)
+	groupStoragePostgres := grouppg.NewGroupStoragePostgres(db)
 	groupStorageService := group.NewGroupStorageService(groupStoragePostgres)
 
-	authService := auth.NewAuthService(os.Getenv("bearer_token"))
+	scheduleStoragePostgres := schedulepg.NewScheduleStoragePostgres(db)
+	scheduleStorageService := schedule.NewScheduleStorageService(scheduleStoragePostgres)
 
-	httpHandler := http.NewHttpHandler(groupStorageService, authService)
+	authService := auth.NewAuthService(os.Getenv("bearer_token"))
+	
+	httpHandler := xhttp.NewHttpHandler(groupStorageService, scheduleStorageService, authService)
 	router := httpHandler.InitRouter()
 
 	botConfig := configs.NewBotConfig(os.Getenv("token"))

@@ -1,12 +1,16 @@
 package message
 
+import (
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/messagepg"
+)
+
 type MessageService struct {
-	messageStorage *MessageStorage
+	messageStorage MessageStorage
 }
 
-func NewMessageService(messageStorage *MessageStorage) *MessageService {
+func NewMessageService(messageStoragePostgres *messagepg.MessageStoragePostgres) *MessageService {
 	return &MessageService{
-		messageStorage: messageStorage,
+		messageStorage: messageStoragePostgres,
 	}
 }
 

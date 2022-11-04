@@ -24,7 +24,7 @@ func (s *ScheduleStoragePostgres) GetLessons(groupId string, from time.Time, to 
 		return nil, err
 	}
 
-	scheduleFromDb, err := s.getScheduleFromDb(groupId, dateString)
+	scheduleFromDb, err := s.getSchedule(groupId, dateString)
 	if err != nil {
 		log.Error("cannot get schedule from db, error: ", err)
 		return nil, err
@@ -34,7 +34,7 @@ func (s *ScheduleStoragePostgres) GetLessons(groupId string, from time.Time, to 
 		return nil, err
 	}
 
-	lessonsFromDb, err := s.getLessonsFromDb(scheduleFromDb.Id)
+	lessonsFromDb, err := s.getLessons(scheduleFromDb.Id)
 	if err != nil {
 		log.Error("cannot get lessons from db, error: ", err)
 		return nil, err
@@ -49,10 +49,9 @@ func (s *ScheduleStoragePostgres) SaveLessons(groupId string, from time.Time, to
 		return err
 	}
 
-	scheduleFromDb, err := s.getScheduleFromDb(groupId, dateString)
+	scheduleFromDb, err := s.getSchedule(groupId, dateString)
 	if err == nil {
-
-		err = s.updateLessonsInDb(scheduleFromDb, lessons)
+		err = s.updateLessons(scheduleFromDb, lessons)
 		if err != nil {
 			return err
 		}
@@ -70,6 +69,56 @@ func (s *ScheduleStoragePostgres) SaveLessons(groupId string, from time.Time, to
 		return err
 	}
 	return nil
+}
+
+func (s *ScheduleStoragePostgres) DeleteSchedule(groupId string, date string) error {
+	schedule, err := s.getSchedule(groupId, date)
+	if err != nil {
+		return err
+	}
+
+	err = s.db.Select("Lessons").Where("group_id = ?", groupId).Delete(&schedule).Error
+	if err != nil {
+		log.Error("cannot delete schedules from db, error: ", err)
+		return err
+	}
+	log.Info("deleted schedule from db")
+	return nil
+}
+
+func (s *ScheduleStoragePostgres) getSchedule(groupId string, dateString string) (*Schedule, error) {
+	var schedule Schedule
+
+	err := s.db.Table("schedules").Where("group_id = ? AND date = ?", groupId, dateString).First(&schedule).Error
+	if err != nil {
+		log.Error("schedule not found in db, error: ", err)
+		return nil, errors.New("schedule not found")
+	}
+	return &schedule, nil
+}
+
+//func (s *ScheduleStoragePostgres) getSchedules(groupId string) ([]*Schedule, error) {
+//	var schedules []*Schedule
+//
+//	err := s.db.Table("schedules").Where("group_id = ?", groupId).Find(&schedules).Error
+//
+//	if err != nil || len(schedules) == 0 {
+//		log.Info("schedules: ", schedules)
+//		log.Error("cannot get schedules from db, error: ", err)
+//		return nil, errors.New("cannot get schedules from db")
+//	}
+//	return schedules, nil
+//}
+
+func (s *ScheduleStoragePostgres) getLessons(scheduleId uint) ([]*Lesson, error) {
+	var lessons []*Lesson
+
+	err := s.db.Table("lessons").Where("schedule_id = ?", scheduleId).Find(&lessons).Error
+	if err != nil {
+		log.Error("lessons not found in db, error: ", err)
+		return nil, errors.New("cant find lessons")
+	}
+	return lessons, nil
 }
 
 func (s *ScheduleStoragePostgres) saveLessonsImpl(groupId string, dateString string, from time.Time, to time.Time, lessons []*Lesson) error {
@@ -93,29 +142,7 @@ func (s *ScheduleStoragePostgres) saveLessonsImpl(groupId string, dateString str
 	return nil
 }
 
-func (s *ScheduleStoragePostgres) getScheduleFromDb(groupId string, dateString string) (*Schedule, error) {
-	var schedule Schedule
-
-	err := s.db.Table("schedules").Where("group_id = ? AND date = ?", groupId, dateString).First(&schedule).Error
-	if err != nil {
-		log.Error("schedule not found in db, error: ", err)
-		return nil, errors.New("schedule not cached")
-	}
-	return &schedule, nil
-}
-
-func (s *ScheduleStoragePostgres) getLessonsFromDb(scheduleId uint) ([]*Lesson, error) {
-	var lessons []*Lesson
-
-	err := s.db.Table("lessons").Where("schedule_id = ?", scheduleId).Find(&lessons).Error
-	if err != nil {
-		log.Error("lessons not found in db, error: ", err)
-		return nil, errors.New("cant find lessons")
-	}
-	return lessons, nil
-}
-
-func (s *ScheduleStoragePostgres) updateLessonsInDb(schedule *Schedule, lessons []*Lesson) error {
+func (s *ScheduleStoragePostgres) updateLessons(schedule *Schedule, lessons []*Lesson) error {
 	err := s.db.Model(&schedule).Association("Lessons").Replace(lessons)
 	if err != nil {
 		log.Error("cannot update lessons in db, error: ", err)
