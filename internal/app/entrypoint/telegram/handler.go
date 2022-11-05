@@ -20,7 +20,7 @@ type TelegramHandler struct {
 	MessageReceiverSaver
 }
 
-func NewTelegramHandler(scheduleService *domain.ScheduleService, messageService *message.MessageService) *TelegramHandler {
+func NewTelegramHandler(scheduleService *domain.ScheduleService, messageService *message.MessageStorageService) *TelegramHandler {
 	return &TelegramHandler{
 		ScheduleReceiver:     scheduleService,
 		MessageReceiverSaver: messageService,

@@ -18,6 +18,7 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/grouppg"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/messagepg"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/schedulepg"
+	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
 	"os"
 	"time"
 )
@@ -51,27 +52,22 @@ func main() {
 		viper.GetString("server.host"),
 		time.Duration(viper.GetInt("server.timeout"))*time.Second)
 
-	getScheduleResponseApi := infra.NewGetScheduleResponseApi(httpClientConfig)
-	groupStorage := infra.NewGroupStorage(db)
-	getScheduleResponseService := infra.NewGetScheduleResponseService(getScheduleResponseApi, groupStorage)
-
-	scheduleApi := domain.NewScheduleApi(getScheduleResponseService)
-	scheduleStorage := domain.NewScheduleStorage(db)
-	scheduleService := domain.NewScheduleService(scheduleApi, scheduleStorage)
-
-	messageStoragePostgres := messagepg.NewMessageStoragePostgres(db)
-	messageService := message.NewMessageService(messageStoragePostgres)
-
-	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageService)
+	httpClient := integration.NewHttpClient(httpClientConfig)
 
 	groupStoragePostgres := grouppg.NewGroupStoragePostgres(db)
-	groupStorageService := group.NewGroupStorageService(groupStoragePostgres)
-
+	messageStoragePostgres := messagepg.NewMessageStoragePostgres(db)
 	scheduleStoragePostgres := schedulepg.NewScheduleStoragePostgres(db)
-	scheduleStorageService := schedule.NewScheduleStorageService(scheduleStoragePostgres)
 
+	getScheduleResponseService := infra.NewGetScheduleResponseService(httpClient, groupStoragePostgres)
+	groupStorageService := group.NewGroupStorageService(groupStoragePostgres)
+	messageStorageService := message.NewMessageStorageService(messageStoragePostgres)
+	scheduleStorageService := schedule.NewScheduleStorageService(scheduleStoragePostgres)
 	authService := auth.NewAuthService(os.Getenv("bearer_token"))
-	
+
+	scheduleService := domain.NewScheduleService(getScheduleResponseService, scheduleStoragePostgres)
+
+	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageStorageService)
+
 	httpHandler := xhttp.NewHttpHandler(groupStorageService, scheduleStorageService, authService)
 	router := httpHandler.InitRouter()
 

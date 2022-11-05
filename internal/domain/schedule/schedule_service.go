@@ -9,14 +9,14 @@ import (
 )
 
 type ScheduleService struct {
-	scheduleApi     *ScheduleApi
-	scheduleStorage *ScheduleStorage
+	scheduleApi     ScheduleApi
+	scheduleStorage ScheduleStorage
 }
 
-func NewScheduleService(scheduleApi *ScheduleApi, scheduleStorage *ScheduleStorage) *ScheduleService {
+func NewScheduleService(getScheduleResponseService *infra.GetScheduleResponseService, scheduleStoragePostgres *schedulepg.ScheduleStoragePostgres) *ScheduleService {
 	return &ScheduleService{
-		scheduleApi:     scheduleApi,
-		scheduleStorage: scheduleStorage,
+		scheduleApi:     getScheduleResponseService,
+		scheduleStorage: scheduleStoragePostgres,
 	}
 }
 

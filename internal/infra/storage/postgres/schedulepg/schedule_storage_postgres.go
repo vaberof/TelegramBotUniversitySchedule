@@ -97,19 +97,6 @@ func (s *ScheduleStoragePostgres) getSchedule(groupId string, dateString string)
 	return &schedule, nil
 }
 
-//func (s *ScheduleStoragePostgres) getSchedules(groupId string) ([]*Schedule, error) {
-//	var schedules []*Schedule
-//
-//	err := s.db.Table("schedules").Where("group_id = ?", groupId).Find(&schedules).Error
-//
-//	if err != nil || len(schedules) == 0 {
-//		log.Info("schedules: ", schedules)
-//		log.Error("cannot get schedules from db, error: ", err)
-//		return nil, errors.New("cannot get schedules from db")
-//	}
-//	return schedules, nil
-//}
-
 func (s *ScheduleStoragePostgres) getLessons(scheduleId uint) ([]*Lesson, error) {
 	var lessons []*Lesson
 
