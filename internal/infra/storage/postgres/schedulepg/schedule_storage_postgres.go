@@ -79,7 +79,7 @@ func (s *ScheduleStoragePostgres) DeleteSchedule(groupId string, date string) er
 
 	err = s.db.Select("Lessons").Where("group_id = ?", groupId).Delete(&schedule).Error
 	if err != nil {
-		log.Error("cannot delete schedules from db, error: ", err)
+		log.Error("cannot delete schedule from db, error: ", err)
 		return err
 	}
 	log.Info("deleted schedule from db")

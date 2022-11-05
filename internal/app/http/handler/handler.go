@@ -9,16 +9,16 @@ import (
 )
 
 type HttpHandler struct {
-	GroupStorage
-	ScheduleStorage
-	TokenValidator
+	groupStorage    GroupStorage
+	scheduleStorage ScheduleStorage
+	tokenService    TokenService
 }
 
 func NewHttpHandler(groupStorageService *group.GroupStorageService, scheduleStorage *schedule.ScheduleStorageService, authService *auth.AuthService) *HttpHandler {
 	return &HttpHandler{
-		GroupStorage:    groupStorageService,
-		ScheduleStorage: scheduleStorage,
-		TokenValidator:  authService,
+		groupStorage:    groupStorageService,
+		scheduleStorage: scheduleStorage,
+		tokenService:    authService,
 	}
 }
 
@@ -26,7 +26,7 @@ func (h *HttpHandler) InitRouter() *gin.Engine {
 	router := gin.Default()
 
 	router.Group("/")
-	router.Use(middleware.Auth(h.TokenValidator))
+	router.Use(middleware.Auth(h.tokenService))
 	{
 		router.POST("/group", h.CreateGroup)
 		router.PUT("/group", h.UpdateGroup)

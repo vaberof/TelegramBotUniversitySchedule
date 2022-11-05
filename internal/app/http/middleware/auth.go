@@ -5,7 +5,7 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/auth"
 )
 
-func Auth(s auth.TokenValidator) gin.HandlerFunc {
+func Auth(s auth.TokenService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		stringToken := c.GetHeader("Authorization")
 		if stringToken == "" {

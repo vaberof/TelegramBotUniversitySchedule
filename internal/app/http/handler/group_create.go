@@ -18,7 +18,7 @@ func (h *HttpHandler) CreateGroup(c *gin.Context) {
 		return
 	}
 
-	err := h.GroupStorage.CreateGroup(groupReqBody.Id, groupReqBody.Name, groupReqBody.ExternalId)
+	err := h.groupStorage.CreateGroup(groupReqBody.Id, groupReqBody.Name, groupReqBody.ExternalId)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": err.Error(),

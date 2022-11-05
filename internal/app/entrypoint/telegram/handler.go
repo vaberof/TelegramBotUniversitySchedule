@@ -10,19 +10,19 @@ type ScheduleReceiver interface {
 	GetSchedule(groupId string, from time.Time, to time.Time) (*domain.Schedule, error)
 }
 
-type MessageReceiverSaver interface {
+type MessageStorage interface {
 	GetMessage(chatId int64) (*string, error)
 	SaveMessage(chatId int64, text string) error
 }
 
 type TelegramHandler struct {
-	ScheduleReceiver
-	MessageReceiverSaver
+	scheduleReceiver ScheduleReceiver
+	messageStorage   MessageStorage
 }
 
-func NewTelegramHandler(scheduleService *domain.ScheduleService, messageService *message.MessageStorageService) *TelegramHandler {
+func NewTelegramHandler(scheduleService *domain.ScheduleService, messageStorageService *message.MessageStorageService) *TelegramHandler {
 	return &TelegramHandler{
-		ScheduleReceiver:     scheduleService,
-		MessageReceiverSaver: messageService,
+		scheduleReceiver: scheduleService,
+		messageStorage:   messageStorageService,
 	}
 }

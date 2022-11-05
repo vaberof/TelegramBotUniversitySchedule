@@ -1,5 +1,5 @@
 package auth
 
-type TokenValidator interface {
+type TokenService interface {
 	ValidateToken(token string) error
 }

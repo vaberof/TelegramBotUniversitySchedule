@@ -62,16 +62,15 @@ func main() {
 	groupStorageService := group.NewGroupStorageService(groupStoragePostgres)
 	messageStorageService := message.NewMessageStorageService(messageStoragePostgres)
 	scheduleStorageService := schedule.NewScheduleStorageService(scheduleStoragePostgres)
-	authService := auth.NewAuthService(os.Getenv("bearer_token"))
-
+	authService := auth.NewAuthService(os.Getenv("BEARER_TOKEN"))
 	scheduleService := domain.NewScheduleService(getScheduleResponseService, scheduleStoragePostgres)
 
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageStorageService)
-
 	httpHandler := xhttp.NewHttpHandler(groupStorageService, scheduleStorageService, authService)
+
 	router := httpHandler.InitRouter()
 
-	botConfig := configs.NewBotConfig(os.Getenv("token"))
+	botConfig := configs.NewBotConfig(os.Getenv("TOKEN"))
 	bot := newBot(botConfig)
 
 	botKeyboardMarkup := newBotKeyboardMarkup()

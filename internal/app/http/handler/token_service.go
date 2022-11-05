@@ -1,5 +1,5 @@
 package handler
 
-type TokenValidator interface {
+type TokenService interface {
 	ValidateToken(token string) error
 }

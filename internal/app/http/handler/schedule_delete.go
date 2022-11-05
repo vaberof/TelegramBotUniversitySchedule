@@ -17,7 +17,7 @@ func (h *HttpHandler) DeleteSchedule(c *gin.Context) {
 		return
 	}
 
-	err := h.ScheduleStorage.DeleteSchedule(scheduleReqBody.GroupId, scheduleReqBody.Date)
+	err := h.scheduleStorage.DeleteSchedule(scheduleReqBody.GroupId, scheduleReqBody.Date)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": err.Error(),

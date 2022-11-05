@@ -57,7 +57,7 @@ func (h *TelegramHandler) MenuButtonPressed(callBackQuery tgbotapi.Update) bool 
 }
 
 func (h *TelegramHandler) getMessageImpl(chatId int64, responseCallback tgbotapi.MessageConfig, bot *tgbotapi.BotAPI) *string {
-	inputTelegramMessage, err := h.MessageReceiverSaver.GetMessage(chatId)
+	inputTelegramMessage, err := h.messageStorage.GetMessage(chatId)
 	if inputTelegramMessage == nil || err != nil {
 		responseCallback.Text = "Введите номер группы"
 		bot.Send(responseCallback)
@@ -95,7 +95,7 @@ func (h *TelegramHandler) getScheduleImpl(
 	responseCallback tgbotapi.MessageConfig,
 	bot *tgbotapi.BotAPI) (*domain.Schedule, error) {
 
-	schedule, err := h.ScheduleReceiver.GetSchedule(groupId, from, to)
+	schedule, err := h.scheduleReceiver.GetSchedule(groupId, from, to)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"schedule": schedule,

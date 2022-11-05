@@ -17,7 +17,7 @@ func (h *HttpHandler) DeleteGroup(c *gin.Context) {
 		return
 	}
 
-	err := h.GroupStorage.DeleteGroup(groupReqBody.Id, groupReqBody.Name)
+	err := h.groupStorage.DeleteGroup(groupReqBody.Id, groupReqBody.Name)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": err.Error(),
