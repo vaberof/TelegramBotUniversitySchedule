@@ -69,7 +69,7 @@ func main() {
 
 	botKeyboardMarkup := newBotKeyboardMarkup()
 
-	wh, err := tgbotapi.NewWebhook(os.Getenv("BASE_URL") + bot.Token)
+	wh, err := tgbotapi.NewWebhook(os.Getenv("BASE_URL"))
 	if err != nil {
 		log.Println(err)
 	}
@@ -89,7 +89,7 @@ func main() {
 		log.Printf("Telegram callback failed: %s", info.LastErrorMessage)
 	}
 
-	updates := bot.ListenForWebhook(os.Getenv("BASE_URL") + bot.Token)
+	updates := bot.ListenForWebhook("/")
 
 	go router.Run(":" + os.Getenv("PORT"))
 
