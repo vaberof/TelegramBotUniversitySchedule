@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"github.com/gin-gonic/gin"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -20,7 +18,6 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/messagepg"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/schedulepg"
 	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
-	"io/ioutil"
 	"os"
 	"time"
 )
@@ -63,58 +60,56 @@ func main() {
 	authService := auth.NewAuthService(os.Getenv("BEARER_TOKEN"))
 	scheduleService := domain.NewScheduleService(getScheduleResponseService, scheduleStoragePostgres)
 
-	_ = telegram.NewTelegramHandler(scheduleService, messageStorageService)
+	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageStorageService)
 	httpHandler := xhttp.NewHttpHandler(groupStorageService, scheduleStorageService, authService)
 
 	router := httpHandler.InitRouter()
 	botConfig := configs.NewBotConfig(os.Getenv("TOKEN"))
 	bot := newBot(botConfig)
 
-	//botKeyboardMarkup := newBotKeyboardMarkup()
+	botKeyboardMarkup := newBotKeyboardMarkup()
 
 	_, err = tgbotapi.NewWebhook(os.Getenv("BASE_URL") + "/" + bot.Token)
 	if err != nil {
 		log.Fatalln("Problem in setting Webhook", err.Error())
 	}
 
-	///updates := bot.ListenForWebhook("/" + bot.Token)
+	updates := bot.ListenForWebhook("/" + bot.Token)
 
-	router.POST("/"+bot.Token, webhookHandler)
-	//go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+	router.POST("/"+bot.Token, nil)
 
 	router.Run(":" + os.Getenv("PORT"))
 
-	//for update := range updates {
-	//	if telegramHandler.CommandReceived(update) {
-	//		telegramHandler.HandleCommandMessage(bot, update)
-	//		continue
-	//	} else if telegramHandler.MessageReceived(update) {
-	//		telegramHandler.HandleNewMessage(bot, update, *botKeyboardMarkup)
-	//	} else if telegramHandler.MenuButtonPressed(update) {
-	//		telegramHandler.HandleMenuButtonPress(bot, update, *botKeyboardMarkup)
-	//	}
-	//}
+	for update := range updates {
+		if telegramHandler.CommandReceived(update) {
+			telegramHandler.HandleCommandMessage(bot, update)
+			continue
+		} else if telegramHandler.MessageReceived(update) {
+			telegramHandler.HandleNewMessage(bot, update, *botKeyboardMarkup)
+		} else if telegramHandler.MenuButtonPressed(update) {
+			telegramHandler.HandleMenuButtonPress(bot, update, *botKeyboardMarkup)
+		}
+	}
 }
 
-func webhookHandler(c *gin.Context) {
-	defer c.Request.Body.Close()
-
-	bytes, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	var update tgbotapi.Update
-	err = json.Unmarshal(bytes, &update)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	log.Printf("From: %+v Text: %+v\n", update.Message.From, update.Message.Text)
-
-}
+//func webhookHandler(c *gin.Context) {
+//	defer c.Request.Body.Close()
+//
+//	bytes, err := ioutil.ReadAll(c.Request.Body)
+//	if err != nil {
+//		log.Println(err)
+//		return
+//	}
+//
+//	var update tgbotapi.Update
+//	err = json.Unmarshal(bytes, &update)
+//	if err != nil {
+//		log.Println(err)
+//		return
+//	}
+//
+//	log.Printf("From: %+v Text: %+v\n", update.Message.From, update.Message.Text)
+//}
 
 func newBot(config *configs.BotConfig) *tgbotapi.BotAPI {
 	token := config.Token
