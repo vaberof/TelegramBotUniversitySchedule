@@ -69,7 +69,7 @@ func main() {
 
 	botKeyboardMarkup := newBotKeyboardMarkup()
 
-	webhook, err := tgbotapi.NewWebhook(os.Getenv("BASE_URL") + bot.Token)
+	webhook, err := tgbotapi.NewWebhookWithCert(os.Getenv("BASE_URL"+bot.Token), tgbotapi.FilePath(os.Getenv("CERT_PEM")))
 	if err != nil {
 		log.Println(err)
 	}
@@ -90,7 +90,7 @@ func main() {
 
 	updates := bot.ListenForWebhook("/" + bot.Token)
 
-	go router.Run(":" + os.Getenv("PORT"))
+	go router.RunTLS(":"+os.Getenv("PORT"), os.Getenv("CERT_PEM"), os.Getenv("KEY_PEM"))
 
 	for update := range updates {
 		if telegramHandler.CommandReceived(update) {
