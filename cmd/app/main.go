@@ -89,7 +89,7 @@ func main() {
 		log.Printf("Telegram callback failed: %s", info.LastErrorMessage)
 	}
 
-	updates := bot.ListenForWebhook("/" + bot.Token)
+	updates := bot.ListenForWebhook(os.Getenv("BASE_URL") + bot.Token)
 
 	go router.Run(":" + os.Getenv("PORT"))
 
