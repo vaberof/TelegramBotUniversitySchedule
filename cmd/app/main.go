@@ -69,23 +69,9 @@ func main() {
 
 	botKeyboardMarkup := newBotKeyboardMarkup()
 
-	webhook, err := tgbotapi.NewWebhook(os.Getenv("BASE_URL") + ":" + os.Getenv("PORT") + "/" + bot.Token)
+	_, err = tgbotapi.NewWebhook(os.Getenv("BASE_URL") + bot.Token)
 	if err != nil {
 		log.Println(err)
-	}
-
-	_, err = bot.Request(webhook)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	info, err := bot.GetWebhookInfo()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if info.LastErrorDate != 0 {
-		log.Printf("Telegram callback failed: %s", info.LastErrorMessage)
 	}
 
 	updates := bot.ListenForWebhook("/" + bot.Token)
