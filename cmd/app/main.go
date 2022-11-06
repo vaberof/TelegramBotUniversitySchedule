@@ -74,7 +74,7 @@ func main() {
 		log.Fatalln("Problem in setting Webhook", err.Error())
 	}
 
-	router.POST("/" + bot.Token)
+	router.POST("/"+bot.Token, nil)
 
 	updates := bot.ListenForWebhook("/" + bot.Token)
 
