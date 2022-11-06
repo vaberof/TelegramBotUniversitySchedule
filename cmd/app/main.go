@@ -18,6 +18,7 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/messagepg"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/schedulepg"
 	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
+	"net/http"
 	"os"
 	"time"
 )
@@ -63,35 +64,22 @@ func main() {
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageStorageService)
 	httpHandler := xhttp.NewHttpHandler(groupStorageService, scheduleStorageService, authService)
 
-	router := httpHandler.InitRouter()
+	_ = httpHandler.InitRouter()
 	botConfig := configs.NewBotConfig(os.Getenv("TOKEN"))
 	bot := newBot(botConfig)
 
 	botKeyboardMarkup := newBotKeyboardMarkup()
 
-	wh, err := tgbotapi.NewWebhook(os.Getenv("BASE_URL") + bot.Token)
+	_, err = tgbotapi.NewWebhook(os.Getenv("BASE_URL") + "/" + bot.Token)
 	if err != nil {
-		log.Println(err)
-	}
-
-	_, err = bot.Request(wh)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	info, err := bot.GetWebhookInfo()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("webhook info: %v", info)
-
-	if info.LastErrorDate != 0 {
-		log.Printf("Telegram callback failed: %s", info.LastErrorMessage)
+		log.Fatalln("Problem in setting Webhook", err.Error())
 	}
 
 	updates := bot.ListenForWebhook("/" + bot.Token)
 
-	go router.Run(":" + os.Getenv("PORT"))
+	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+
+	//router.Run(":" + os.Getenv("PORT"))
 
 	for update := range updates {
 		if telegramHandler.CommandReceived(update) {
