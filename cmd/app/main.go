@@ -80,7 +80,7 @@ func main() {
 
 	updates := bot.GetUpdatesChan(botUpdatesChannel)
 
-	go router.Run(":8080")
+	go router.Run(":" + os.Getenv("PORT"))
 
 	for update := range updates {
 		if telegramHandler.CommandReceived(update) {
