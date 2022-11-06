@@ -74,7 +74,7 @@ func main() {
 		log.Println(err)
 	}
 
-	updates := bot.ListenForWebhook("/" + bot.Token)
+	updates := bot.ListenForWebhook(os.Getenv("BASE_URL") + bot.Token)
 
 	go router.Run(":" + os.Getenv("PORT"))
 
