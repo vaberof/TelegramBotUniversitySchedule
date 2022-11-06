@@ -32,7 +32,6 @@ func (h *HttpHandler) InitRouter() *gin.Engine {
 		rGroup.POST("/create", h.CreateGroup)
 		rGroup.PUT("/update", h.UpdateGroup)
 		rGroup.DELETE("/delete", h.DeleteGroup)
-
 	}
 
 	rSchedule := router.Group("/schedule")
