@@ -75,6 +75,8 @@ func main() {
 
 	updates := bot.GetUpdatesChan(botUpdatesChannel)
 
+	go router.Run(":" + os.Getenv("PORT"))
+
 	for update := range updates {
 		if telegramHandler.CommandReceived(update) {
 			telegramHandler.HandleCommandMessage(bot, update)
@@ -85,8 +87,6 @@ func main() {
 			telegramHandler.HandleMenuButtonPress(bot, update, *botKeyboardMarkup)
 		}
 	}
-
-	go router.Run(":" + os.Getenv("PORT"))
 }
 
 func newBot(config *configs.BotConfig) *tgbotapi.BotAPI {

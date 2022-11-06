@@ -1,2 +1,2 @@
-worker: bin/app
 web: bin/app
+worker: bin/app
