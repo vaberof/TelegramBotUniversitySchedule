@@ -18,6 +18,7 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/messagepg"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/schedulepg"
 	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
+	"net/http"
 	"os"
 	"time"
 )
@@ -63,7 +64,7 @@ func main() {
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageStorageService)
 	httpHandler := xhttp.NewHttpHandler(groupStorageService, scheduleStorageService, authService)
 
-	router := httpHandler.InitRouter()
+	_ = httpHandler.InitRouter()
 	botConfig := configs.NewBotConfig(os.Getenv("TOKEN"))
 	bot := newBot(botConfig)
 
@@ -76,9 +77,7 @@ func main() {
 
 	updates := bot.ListenForWebhook("/" + bot.Token)
 
-	//router.POST("/"+bot.Token, nil)
-
-	go router.Run(":" + os.Getenv("PORT"))
+	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 
 	for update := range updates {
 		if telegramHandler.CommandReceived(update) {
