@@ -83,8 +83,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Info(info)
-	
+	log.Printf("webhook info: %v", info)
+
 	if info.LastErrorDate != 0 {
 		log.Printf("Telegram callback failed: %s", info.LastErrorMessage)
 	}
