@@ -64,16 +64,31 @@ func main() {
 	httpHandler := xhttp.NewHttpHandler(groupStorageService, scheduleStorageService, authService)
 
 	router := httpHandler.InitRouter()
-
 	botConfig := configs.NewBotConfig(os.Getenv("TOKEN"))
 	bot := newBot(botConfig)
 
 	botKeyboardMarkup := newBotKeyboardMarkup()
 
-	botUpdatesChannel := tgbotapi.NewUpdate(0)
-	botUpdatesChannel.Timeout = 60
+	webhook, err := tgbotapi.NewWebhook(os.Getenv("BASE_URL") + bot.Token)
+	if err != nil {
+		log.Println(err)
+	}
 
-	updates := bot.GetUpdatesChan(botUpdatesChannel)
+	_, err = bot.Request(webhook)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	info, err := bot.GetWebhookInfo()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if info.LastErrorDate != 0 {
+		log.Printf("Telegram callback failed: %s", info.LastErrorMessage)
+	}
+
+	updates := bot.ListenForWebhook("/" + bot.Token)
 
 	go router.Run(":" + os.Getenv("PORT"))
 
