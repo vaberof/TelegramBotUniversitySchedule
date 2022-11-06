@@ -14,10 +14,10 @@ type HttpHandler struct {
 	tokenService    TokenService
 }
 
-func NewHttpHandler(groupStorageService *group.GroupStorageService, scheduleStorage *schedule.ScheduleStorageService, authService *auth.AuthService) *HttpHandler {
+func NewHttpHandler(groupStorageService *group.GroupStorageService, scheduleStorageService *schedule.ScheduleStorageService, authService *auth.AuthService) *HttpHandler {
 	return &HttpHandler{
 		groupStorage:    groupStorageService,
-		scheduleStorage: scheduleStorage,
+		scheduleStorage: scheduleStorageService,
 		tokenService:    authService,
 	}
 }
