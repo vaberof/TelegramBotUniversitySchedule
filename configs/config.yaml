@@ -3,6 +3,6 @@ server:
   timeout: 3
 
 db:
-  host: "localhost"
+  host: "ec2-54-155-129-189.eu-west-1.compute.amazonaws.com"
   port: "5432"
-  name: "schedule_tg_bot"
+  name: "dd0npvt10ntlqn"
