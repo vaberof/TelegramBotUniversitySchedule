@@ -18,6 +18,7 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/messagepg"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/schedulepg"
 	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
+	"net/http"
 	"os"
 	"time"
 )
@@ -74,11 +75,10 @@ func main() {
 		log.Fatalln("Problem in setting Webhook", err.Error())
 	}
 
-	router.POST("/"+bot.Token, nil)
-
 	updates := bot.ListenForWebhook("/" + bot.Token)
 
 	go router.Run(":" + os.Getenv("PORT"))
+	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 
 	for update := range updates {
 		if telegramHandler.CommandReceived(update) {
@@ -91,25 +91,6 @@ func main() {
 		}
 	}
 }
-
-//func webhookHandler(c *gin.Context) {
-//	defer c.Request.Body.Close()
-//
-//	bytes, err := ioutil.ReadAll(c.Request.Body)
-//	if err != nil {
-//		log.Println(err)
-//		return
-//	}
-//
-//	var update tgbotapi.Update
-//	err = json.Unmarshal(bytes, &update)
-//	if err != nil {
-//		log.Println(err)
-//		return
-//	}
-//
-//	log.Printf("From: %+v Text: %+v\n", update.Message.From, update.Message.Text)
-//}
 
 func newBot(config *configs.BotConfig) *tgbotapi.BotAPI {
 	token := config.Token
