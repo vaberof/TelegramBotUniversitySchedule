@@ -7,6 +7,7 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/configs"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/entrypoint/telegram"
 	xhttp "github.com/vaberof/TelegramBotUniversitySchedule/internal/app/http/handler"
+	whhandler "github.com/vaberof/TelegramBotUniversitySchedule/internal/app/http/webhook/handler"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/auth"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/group"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/message"
@@ -18,7 +19,6 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/messagepg"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/schedulepg"
 	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
-	"net/http"
 	"os"
 	"time"
 )
@@ -67,29 +67,19 @@ func main() {
 	router := httpHandler.InitRouter()
 	botConfig := configs.NewBotConfig(os.Getenv("TOKEN"))
 	bot := newBot(botConfig)
-
 	botKeyboardMarkup := newBotKeyboardMarkup()
+
+	webhookHandler := whhandler.NewWebhookHandler(bot, botKeyboardMarkup, telegramHandler)
 
 	_, err = tgbotapi.NewWebhook(os.Getenv("BASE_URL") + "/" + bot.Token)
 	if err != nil {
-		log.Fatalln("Problem in setting Webhook", err.Error())
+		log.Fatalf("cannot create webhook: %s", err.Error())
+
 	}
 
-	updates := bot.ListenForWebhook("/" + bot.Token)
+	router.POST("/"+bot.Token, webhookHandler.HandleWebhook)
 
-	go router.Run(":" + os.Getenv("PORT"))
-	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
-
-	for update := range updates {
-		if telegramHandler.CommandReceived(update) {
-			telegramHandler.HandleCommandMessage(bot, update)
-			continue
-		} else if telegramHandler.MessageReceived(update) {
-			telegramHandler.HandleNewMessage(bot, update, *botKeyboardMarkup)
-		} else if telegramHandler.MenuButtonPressed(update) {
-			telegramHandler.HandleMenuButtonPress(bot, update, *botKeyboardMarkup)
-		}
-	}
+	router.Run(":" + os.Getenv("PORT"))
 }
 
 func newBot(config *configs.BotConfig) *tgbotapi.BotAPI {
