@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/grouppg"
 	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
 	"time"
 )
@@ -14,10 +13,10 @@ type GetScheduleResponseService struct {
 	groupStorage GroupStorage
 }
 
-func NewGetScheduleResponseService(httpClient *integration.HttpClient, groupStoragePostgres *grouppg.GroupStoragePostgres) *GetScheduleResponseService {
+func NewGetScheduleResponseService(scheduleApi ScheduleApi, groupStorage GroupStorage) *GetScheduleResponseService {
 	return &GetScheduleResponseService{
-		scheduleApi:  httpClient,
-		groupStorage: groupStoragePostgres,
+		scheduleApi:  scheduleApi,
+		groupStorage: groupStorage,
 	}
 }
 

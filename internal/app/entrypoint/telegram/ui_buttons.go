@@ -24,24 +24,24 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 	log.WithFields(log.Fields{"username": update.SentFrom(), "button": inputTelegramButtonDate}).
 		Info("User requested a schedule")
 
-	inputTelegramMessage := h.getMessageImpl(responseCallback.ChatID, responseCallback, bot)
+	inputTelegramMessage := h.getMessage(responseCallback.ChatID, responseCallback, bot)
 	if inputTelegramMessage == nil {
 		return
 	}
 
-	fromDate, toDate, err := h.parseDatesRangeImpl(inputTelegramButtonDate, responseCallback, bot)
+	fromDate, toDate, err := h.parseDatesRange(inputTelegramButtonDate, responseCallback, bot)
 	if err != nil {
 		return
 	}
 
 	groupId := *inputTelegramMessage
 
-	schedule, err := h.getScheduleImpl(groupId, fromDate, toDate, responseCallback, bot)
+	schedule, err := h.getSchedule(groupId, fromDate, toDate, responseCallback, bot)
 	if err != nil {
 		return
 	}
 
-	scheduleString, err := h.scheduleToStringImpl(groupId, inputTelegramButtonDate, schedule, responseCallback, bot)
+	scheduleString, err := h.scheduleToString(groupId, inputTelegramButtonDate, schedule, responseCallback, bot)
 	if scheduleString == nil || err != nil {
 		return
 	}
@@ -56,7 +56,7 @@ func (h *TelegramHandler) MenuButtonPressed(callBackQuery tgbotapi.Update) bool 
 	return callBackQuery.CallbackQuery != nil
 }
 
-func (h *TelegramHandler) getMessageImpl(chatId int64, responseCallback tgbotapi.MessageConfig, bot *tgbotapi.BotAPI) *string {
+func (h *TelegramHandler) getMessage(chatId int64, responseCallback tgbotapi.MessageConfig, bot *tgbotapi.BotAPI) *string {
 	inputTelegramMessage, err := h.messageStorage.GetMessage(chatId)
 	if inputTelegramMessage == nil || err != nil {
 		responseCallback.Text = "Введите номер группы"
@@ -66,7 +66,7 @@ func (h *TelegramHandler) getMessageImpl(chatId int64, responseCallback tgbotapi
 	return inputTelegramMessage
 }
 
-func (h *TelegramHandler) parseDatesRangeImpl(
+func (h *TelegramHandler) parseDatesRange(
 	inputTelegramButtonDate string,
 	responseCallback tgbotapi.MessageConfig,
 	bot *tgbotapi.BotAPI) (time.Time, time.Time, error) {
@@ -88,7 +88,7 @@ func (h *TelegramHandler) parseDatesRangeImpl(
 	return fromDate, toDate, nil
 }
 
-func (h *TelegramHandler) getScheduleImpl(
+func (h *TelegramHandler) getSchedule(
 	groupId string,
 	from time.Time,
 	to time.Time,
@@ -110,7 +110,7 @@ func (h *TelegramHandler) getScheduleImpl(
 	return schedule, nil
 }
 
-func (h *TelegramHandler) scheduleToStringImpl(
+func (h *TelegramHandler) scheduleToString(
 	groupId string,
 	inputTelegramButtonDate string,
 	schedule *domain.Schedule,

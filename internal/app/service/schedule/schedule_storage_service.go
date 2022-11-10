@@ -1,15 +1,11 @@
 package schedule
 
-import (
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/schedulepg"
-)
-
 type ScheduleStorageService struct {
 	scheduleStorage ScheduleStorage
 }
 
-func NewScheduleStorageService(scheduleStoragePostgres *schedulepg.ScheduleStoragePostgres) *ScheduleStorageService {
-	return &ScheduleStorageService{scheduleStorage: scheduleStoragePostgres}
+func NewScheduleStorageService(scheduleStorage ScheduleStorage) *ScheduleStorageService {
+	return &ScheduleStorageService{scheduleStorage: scheduleStorage}
 }
 
 func (s *ScheduleStorageService) DeleteSchedule(groupId string, date string) error {
