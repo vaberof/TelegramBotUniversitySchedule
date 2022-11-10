@@ -31,12 +31,7 @@ func getScheduleString(groupId string, inputTelegramButtonDate string, schedule 
 	}
 }
 
-func dayScheduleToString(
-	groupId string,
-	inputTelegramButtonDate string,
-	date time.Time,
-	schedule *domain.Schedule) *string {
-
+func dayScheduleToString(groupId string, inputTelegramButtonDate string, date time.Time, schedule *domain.Schedule) *string {
 	var scheduleString string
 
 	domainDate := domain.Date(inputTelegramButtonDate)
@@ -65,12 +60,7 @@ func dayScheduleToString(
 	return &scheduleString
 }
 
-func weekScheduleToString(
-	groupId string,
-	inputTelegramButtonDate string,
-	datesRange []time.Time,
-	schedule *domain.Schedule) *string {
-
+func weekScheduleToString(groupId string, inputTelegramButtonDate string, datesRange []time.Time, schedule *domain.Schedule) *string {
 	var scheduleString string
 
 	domainDate := domain.Date(inputTelegramButtonDate)

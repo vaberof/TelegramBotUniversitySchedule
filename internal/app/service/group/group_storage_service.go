@@ -1,16 +1,12 @@
 package group
 
-import (
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/grouppg"
-)
-
 type GroupStorageService struct {
 	groupStorage GroupStorage
 }
 
-func NewGroupStorageService(groupStoragePostgres *grouppg.GroupStoragePostgres) *GroupStorageService {
+func NewGroupStorageService(groupStorage GroupStorage) *GroupStorageService {
 	return &GroupStorageService{
-		groupStorage: groupStoragePostgres,
+		groupStorage: groupStorage,
 	}
 }
 

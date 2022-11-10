@@ -13,10 +13,10 @@ type ScheduleService struct {
 	scheduleStorage ScheduleStorage
 }
 
-func NewScheduleService(getScheduleResponseService *infra.GetScheduleResponseService, scheduleStoragePostgres *schedulepg.ScheduleStoragePostgres) *ScheduleService {
+func NewScheduleService(scheduleApi ScheduleApi, scheduleStorage ScheduleStorage) *ScheduleService {
 	return &ScheduleService{
-		scheduleApi:     getScheduleResponseService,
-		scheduleStorage: scheduleStoragePostgres,
+		scheduleApi:     scheduleApi,
+		scheduleStorage: scheduleStorage,
 	}
 }
 

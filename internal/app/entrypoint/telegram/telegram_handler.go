@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/message"
 	domain "github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
 	"time"
 )
@@ -20,9 +19,9 @@ type TelegramHandler struct {
 	messageStorage   MessageStorage
 }
 
-func NewTelegramHandler(scheduleService *domain.ScheduleService, messageStorageService *message.MessageStorageService) *TelegramHandler {
+func NewTelegramHandler(scheduleReceiver ScheduleReceiver, messageStorage MessageStorage) *TelegramHandler {
 	return &TelegramHandler{
-		scheduleReceiver: scheduleService,
-		messageStorage:   messageStorageService,
+		scheduleReceiver: scheduleReceiver,
+		messageStorage:   messageStorage,
 	}
 }
