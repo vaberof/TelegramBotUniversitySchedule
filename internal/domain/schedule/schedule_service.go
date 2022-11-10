@@ -1,7 +1,6 @@
 package domain
 
 import (
-	log "github.com/sirupsen/logrus"
 	infra "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/integration/unisite"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/schedulepg"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtimeconv"
@@ -85,7 +84,6 @@ func (s *ScheduleService) fromGetScheduleRespToDomainSchedule(
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("dateString in service: %v\n", dateString)
 
 	schedule := make(Schedule)
 	schedule[Date(dateString)] = daySchedule
@@ -147,14 +145,13 @@ func (s *ScheduleService) storageLessonsToDomainSchedule(
 
 	daySchedule := s.storageLessonsToDomainDaySchedule(storageLessons)
 
-	strDate, err := xtimeconv.FromTimeRangeToDateString(from, to)
+	dateString, err := xtimeconv.FromTimeRangeToDateString(from, to)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("strDate in service: %v\n", strDate)
 
 	schedule := make(Schedule)
-	schedule[Date(strDate)] = daySchedule
+	schedule[Date(dateString)] = daySchedule
 	return &schedule, nil
 }
 

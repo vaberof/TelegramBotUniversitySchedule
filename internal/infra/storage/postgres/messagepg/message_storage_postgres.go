@@ -51,9 +51,9 @@ func (m *MessageStoragePostgres) updateMessageInDb(message *Message, text string
 
 	err := m.db.Save(&message).Error
 	if err != nil {
-		log.Error("cannot update message in database, error: ", err)
+		log.Printf("cannot update message '%v' in database, error: %v", message, err)
 		return err
 	}
-	log.Info("message updated")
+	log.Printf("message '%v' updated", message)
 	return nil
 }
