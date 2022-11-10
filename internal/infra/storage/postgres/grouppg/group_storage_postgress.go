@@ -30,7 +30,7 @@ func (g *GroupStoragePostgres) GetGroupExternalId(groupId string) *string {
 func (g *GroupStoragePostgres) CreateGroup(id string, name string, externalId string) error {
 	_, err := g.getGroup(id, name)
 	if err == nil {
-		log.Error("group already exists in database, error: ", err)
+		log.Printf("group '%s' already exists in database, error: %v", id+"-"+name, err)
 		return errors.New("group already exists in database")
 	}
 
@@ -42,10 +42,10 @@ func (g *GroupStoragePostgres) CreateGroup(id string, name string, externalId st
 
 	err = g.db.Table("groups").Create(&group).Error
 	if err != nil {
-		log.Error("cannot create group in database, error: ", err)
+		log.Printf("cannot create group '%s' in database, error: %v", id+"-"+name, err)
 		return err
 	}
-	log.Info("created the group in database")
+	log.Printf("group '%s' created in database", id+"-"+name)
 	return nil
 }
 
@@ -56,7 +56,7 @@ func (g *GroupStoragePostgres) UpdateGroupExternalId(
 
 	group, err := g.getGroup(id, name)
 	if err != nil {
-		log.Error("cannot update group in database, error: ", err)
+		log.Printf("cannot update group '%s' in database, error: %v", id+"-"+name, err)
 		return err
 	}
 
@@ -64,10 +64,10 @@ func (g *GroupStoragePostgres) UpdateGroupExternalId(
 
 	err = g.db.Table("groups").Save(&group).Error
 	if err != nil {
-		log.Error("cannot save group in database, error: ", err)
+		log.Printf("cannot save group '%s' in database, error: %v", id+"-"+name, err)
 		return err
 	}
-	log.Info("group updated in database")
+	log.Printf("group '%s' updated in database", id+"-"+name)
 	return nil
 }
 
@@ -79,10 +79,10 @@ func (g *GroupStoragePostgres) DeleteGroup(id string, name string) error {
 
 	err = g.db.Table("groups").Delete(&group).Error
 	if err != nil {
-		log.Error("cannot delete group from database, error ", err)
+		log.Printf("cannot delete group '%s' from database, error: %v ", id+"-"+name, err)
 		return err
 	}
-	log.Info("group deleted from database")
+	log.Printf("group '%s' updated in database", id+"-"+name)
 	return nil
 }
 
@@ -92,7 +92,7 @@ func (g *GroupStoragePostgres) getGroup(id string, name string) (*Group, error) 
 	err := g.db.Table("groups").Where("id = ? AND name = ?", id, name).
 		First(&group).Error
 	if err != nil {
-		log.Error("cannot find group in database, error: ", err)
+		log.Printf("cannot find group '%s' in database, error: %v", id+"-"+name, err)
 		return nil, errors.New("group does not exist")
 	}
 	return &group, nil
