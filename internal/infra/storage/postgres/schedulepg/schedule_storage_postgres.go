@@ -56,11 +56,23 @@ func (s *ScheduleStoragePostgres) SaveLessons(groupId string, from time.Time, to
 			return err
 		}
 
+		err = s.setExpireTime(scheduleFromDb, from, to)
+		if err != nil {
+			return err
+		}
+
+		err = s.db.Save(scheduleFromDb).Error
+		if err != nil {
+			log.Info("cannot save lessons in db")
+			return err
+		}
+
 		err = s.deleteLessonsWithNullScheduleId()
 		if err != nil {
 			return err
 		}
 		log.Info("deleted lessons with null schedule id from db")
+		return nil
 	}
 
 	err = s.saveLessonsImpl(groupId, dateString, from, to, lessons)
@@ -83,28 +95,6 @@ func (s *ScheduleStoragePostgres) DeleteSchedule(groupId string, date string) er
 	}
 	log.Info("deleted schedule from db")
 	return nil
-}
-
-func (s *ScheduleStoragePostgres) getSchedule(groupId string, dateString string) (*Schedule, error) {
-	var schedule Schedule
-
-	err := s.db.Table("schedules").Where("group_id = ? AND date = ?", groupId, dateString).First(&schedule).Error
-	if err != nil {
-		log.Error("schedule not found in db, error: ", err)
-		return nil, errors.New("schedule not found")
-	}
-	return &schedule, nil
-}
-
-func (s *ScheduleStoragePostgres) getLessons(scheduleId uint) ([]*Lesson, error) {
-	var lessons []*Lesson
-
-	err := s.db.Table("lessons").Where("schedule_id = ?", scheduleId).Find(&lessons).Error
-	if err != nil {
-		log.Error("lessons not found in db, error: ", err)
-		return nil, errors.New("cant find lessons")
-	}
-	return lessons, nil
 }
 
 func (s *ScheduleStoragePostgres) saveLessonsImpl(groupId string, dateString string, from time.Time, to time.Time, lessons []*Lesson) error {
@@ -154,6 +144,9 @@ func (s *ScheduleStoragePostgres) setExpireTime(schedule *Schedule, from time.Ti
 	}
 
 	s.setExpireTimeImpl(schedule, dateString, to)
+	if err != nil {
+		return err
+	}
 	log.Info("settled expire time: ", schedule.ExpireTime.Format("02.01.2006"))
 	return nil
 }
@@ -189,4 +182,26 @@ func (s *ScheduleStoragePostgres) isScheduleOutdated(scheduleExpireTime time.Tim
 		return errors.New("schedule is outdated")
 	}
 	return nil
+}
+
+func (s *ScheduleStoragePostgres) getSchedule(groupId string, dateString string) (*Schedule, error) {
+	var schedule Schedule
+
+	err := s.db.Table("schedules").Where("group_id = ? AND date = ?", groupId, dateString).First(&schedule).Error
+	if err != nil {
+		log.Error("schedule not found in db, error: ", err)
+		return nil, errors.New("schedule not found")
+	}
+	return &schedule, nil
+}
+
+func (s *ScheduleStoragePostgres) getLessons(scheduleId uint) ([]*Lesson, error) {
+	var lessons []*Lesson
+
+	err := s.db.Table("lessons").Where("schedule_id = ?", scheduleId).Find(&lessons).Error
+	if err != nil {
+		log.Error("lessons not found in db, error: ", err)
+		return nil, errors.New("cant find lessons")
+	}
+	return lessons, nil
 }
