@@ -34,7 +34,7 @@ func (h *HttpHandler) InitRouter() *gin.Engine {
 	rSchedule := router.Group("/schedule")
 	rSchedule.Use(middleware.Auth(h.tokenService))
 	{
-		router.DELETE("/delete", h.DeleteSchedule)
+		rSchedule.DELETE("/delete", h.DeleteSchedule)
 	}
 
 	return router
