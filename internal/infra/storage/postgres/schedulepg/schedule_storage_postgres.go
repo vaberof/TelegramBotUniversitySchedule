@@ -61,7 +61,6 @@ func (s *ScheduleStoragePostgres) SaveLessons(groupId string, from time.Time, to
 			return err
 		}
 		log.Info("deleted lessons with null schedule id from db")
-		return nil
 	}
 
 	err = s.saveLessonsImpl(groupId, dateString, from, to, lessons)
