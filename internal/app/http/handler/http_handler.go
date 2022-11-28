@@ -20,17 +20,22 @@ func NewHttpHandler(groupStorage GroupStorage, scheduleStorage ScheduleStorage, 
 }
 
 func (h *HttpHandler) InitRouter() *gin.Engine {
-	router := gin.Default()
+
 	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
 
-	router.Group("/")
-	router.Use(middleware.Auth(h.tokenService))
+	rGroup := router.Group("/group")
+	rGroup.Use(middleware.Auth(h.tokenService))
 	{
-		router.POST("/group", h.CreateGroup)
-		router.PUT("/group", h.UpdateGroup)
-		router.DELETE("/group", h.DeleteGroup)
+		rGroup.POST("/create", h.CreateGroup)
+		rGroup.PUT("/update", h.UpdateGroup)
+		rGroup.DELETE("/delete", h.DeleteGroup)
+	}
 
-		router.DELETE("/schedule", h.DeleteSchedule)
+	rSchedule := router.Group("/schedule")
+	rSchedule.Use(middleware.Auth(h.tokenService))
+	{
+		rSchedule.DELETE("/delete", h.DeleteSchedule)
 	}
 
 	return router
