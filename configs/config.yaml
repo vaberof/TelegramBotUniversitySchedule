@@ -3,6 +3,6 @@ server:
   timeout: 3
 
 db:
-  host: "localhost"
+  host: "92.255.78.163"
   port: "5432"
-  name: "schedule_tg_bot"
+  name: "telegrambotschedule"

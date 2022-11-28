@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/auth"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/service/auth"
 )
 
 func Auth(s auth.TokenService) gin.HandlerFunc {

@@ -8,17 +8,16 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/configs"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/entrypoint/telegram"
 	xhttp "github.com/vaberof/TelegramBotUniversitySchedule/internal/app/http/handler"
-	whhandler "github.com/vaberof/TelegramBotUniversitySchedule/internal/app/http/webhook/handler"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/auth"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/group"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/message"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/service/schedule"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
 	infra "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/integration/unisite"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/grouppg"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/messagepg"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/schedulepg"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/service/auth"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/service/group"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/service/message"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/service/schedule"
 	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
 	"os"
 	"time"
@@ -75,16 +74,34 @@ func main() {
 	bot := newBot(botConfig)
 	botKeyboardMarkup := newBotKeyboardMarkup()
 
-	webhookHandler := whhandler.NewWebhookHandler(bot, botKeyboardMarkup, telegramHandler)
+	botUpdatesChannel := tgbotapi.NewUpdate(0)
+	botUpdatesChannel.Timeout = 60
 
-	_, err = tgbotapi.NewWebhook(os.Getenv("BASE_URL") + "/" + bot.Token)
-	if err != nil {
-		log.Fatalf("cannot create webhook: %s", err.Error())
+	updates := bot.GetUpdatesChan(botUpdatesChannel)
+
+	go router.Run(":" + os.Getenv("PORT"))
+
+	for update := range updates {
+		if telegramHandler.CommandReceived(update) {
+			telegramHandler.HandleCommandMessage(bot, update)
+			continue
+		} else if telegramHandler.MessageReceived(update) {
+			telegramHandler.HandleNewMessage(bot, update, *botKeyboardMarkup)
+		} else if telegramHandler.MenuButtonPressed(update) {
+			telegramHandler.HandleMenuButtonPress(bot, update, *botKeyboardMarkup)
+		}
 	}
 
-	router.POST("/"+bot.Token, webhookHandler.HandleWebhook)
+	//webhookHandler := whhandler.NewWebhookHandler(bot, botKeyboardMarkup, telegramHandler)
 
-	router.Run(":" + os.Getenv("PORT"))
+	//_, err = tgbotapi.NewWebhookWithCert(os.Getenv("BASE_URL")+"/"+bot.Token, tgbotapi.FilePath("../../certs/cert.crt"))
+	//if err != nil {
+	//	log.Fatalf("cannot create webhook: %s", err.Error())
+	//}
+
+	//router.POST("/"+bot.Token, webhookHandler.HandleWebhook)
+
+	//router.RunTLS(":"+os.Getenv("PORT"), "../../certs/cert.crt", "../../certs/cert.key")
 }
 
 func newBot(config *configs.BotConfig) *tgbotapi.BotAPI {

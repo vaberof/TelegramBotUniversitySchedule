@@ -160,6 +160,7 @@ func (s *ScheduleStoragePostgres) setExpireTime(schedule *Schedule, from time.Ti
 }
 
 func (s *ScheduleStoragePostgres) setExpireTimeImpl(schedule *Schedule, dateString string, date time.Time) {
+	log.Printf("DATE TIME: %v", date)
 	switch dateString {
 	case "Today":
 		tomorrowExpireDate := date.Add(24 * time.Hour)
