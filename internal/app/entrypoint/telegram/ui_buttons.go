@@ -21,13 +21,13 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 
 	inputTelegramButtonDate := responseCallback.Text
 
-	log.WithFields(log.Fields{"username": update.SentFrom(), "button": inputTelegramButtonDate}).
-		Info("User requested a schedule")
-
 	inputTelegramMessage := h.getMessage(responseCallback.ChatID, responseCallback, bot)
 	if inputTelegramMessage == nil {
 		return
 	}
+
+	log.WithFields(log.Fields{"username": update.SentFrom(), "button": inputTelegramButtonDate, "message": *inputTelegramMessage}).
+		Info("User requested a schedule")
 
 	fromDate, toDate, err := h.parseDatesRange(inputTelegramButtonDate, responseCallback, bot)
 	if err != nil {

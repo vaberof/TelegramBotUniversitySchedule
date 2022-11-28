@@ -56,6 +56,17 @@ func (s *ScheduleStoragePostgres) SaveLessons(groupId string, from time.Time, to
 			return err
 		}
 
+		err = s.setExpireTime(scheduleFromDb, from, to)
+		if err != nil {
+			return err
+		}
+
+		err = s.db.Save(scheduleFromDb).Error
+		if err != nil {
+			log.Info("cannot save lessons in db")
+			return err
+		}
+
 		err = s.deleteLessonsWithNullScheduleId()
 		if err != nil {
 			return err
@@ -155,26 +166,30 @@ func (s *ScheduleStoragePostgres) setExpireTime(schedule *Schedule, from time.Ti
 	}
 
 	s.setExpireTimeImpl(schedule, dateString, to)
-	log.Info("settled expire time: ", schedule.ExpireTime.Format("02.01.2006"))
+	if err != nil {
+		return err
+	}
+	log.Info("settled expire time: ", schedule.ExpireTime)
 	return nil
 }
 
-func (s *ScheduleStoragePostgres) setExpireTimeImpl(schedule *Schedule, dateString string, date time.Time) {
-	log.Printf("DATE TIME: %v", date)
+func (s *ScheduleStoragePostgres) setExpireTimeImpl(schedule *Schedule, dateString string, requestedDate time.Time) {
+	yyyy, mm, dd := requestedDate.Date()
+
 	switch dateString {
 	case "Today":
-		tomorrowExpireDate := date.Add(24 * time.Hour)
+		tomorrowExpireDate := time.Date(yyyy, mm, dd+1, 0, 0, 0, 0, requestedDate.Location())
 		schedule.ExpireTime = tomorrowExpireDate
 	case "Tomorrow":
-		tomorrowExpireDate := date
+		tomorrowExpireDate := time.Date(yyyy, mm, dd, 0, 0, 0, 0, requestedDate.Location())
 		schedule.ExpireTime = tomorrowExpireDate
 	case "Week":
-		// date is equals to sunday of the current week
-		nextMondayExpireDate := date.Add(24 * time.Hour)
+		// requestedDate is equals to sunday of the current week
+		nextMondayExpireDate := time.Date(yyyy, mm, dd+1, 0, 0, 0, 0, requestedDate.Location())
 		schedule.ExpireTime = nextMondayExpireDate
 	default:
-		// date is equals to sunday of the next week
-		nextMondayExpireDate := date.Add(-6 * 24 * time.Hour)
+		// requestedDate is equals to sunday of the next week
+		nextMondayExpireDate := time.Date(yyyy, mm, dd-6, 0, 0, 0, 0, requestedDate.Location())
 		schedule.ExpireTime = nextMondayExpireDate
 	}
 }
@@ -185,9 +200,9 @@ func (s *ScheduleStoragePostgres) isScheduleOutdated(scheduleExpireTime time.Tim
 		return err
 	}
 
-	currentDate := time.Now().In(novosibirsk).Format("02.01")
-	if currentDate >= scheduleExpireTime.Format("02.01") {
-		log.Info("schedule is outdated: ", scheduleExpireTime.Format("02.01"))
+	currentTime := time.Now().In(novosibirsk)
+	if currentTime.After(scheduleExpireTime) {
+		log.Info("schedule is outdated: ", scheduleExpireTime)
 		return errors.New("schedule is outdated")
 	}
 	return nil

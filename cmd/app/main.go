@@ -2,6 +2,7 @@ package main
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/vaberof/TelegramBotUniversitySchedule/configs"
@@ -25,6 +26,10 @@ import (
 func main() {
 	if err := initConfig(); err != nil {
 		log.Fatalf("failed initializating config: %s", err.Error())
+	}
+
+	if err := godotenv.Load("../../.env"); err != nil {
+		log.Fatal("Error loading .env file")
 	}
 
 	db, err := postgres.NewPostgresDb(&postgres.Config{
@@ -70,8 +75,6 @@ func main() {
 
 	botUpdatesChannel := tgbotapi.NewUpdate(0)
 	botUpdatesChannel.Timeout = 60
-
-<<<<<<< HEAD
 	updates := bot.GetUpdatesChan(botUpdatesChannel)
 
 	go router.Run(":" + os.Getenv("PORT"))
@@ -85,12 +88,7 @@ func main() {
 		} else if telegramHandler.MenuButtonPressed(update) {
 			telegramHandler.HandleMenuButtonPress(bot, update, *botKeyboardMarkup)
 		}
-=======
-	_, err = tgbotapi.NewWebhook(os.Getenv("BASE_URL") + "/" + bot.Token)
-	if err != nil {
-		log.Fatalf("cannot create webhook: %s", err.Error())
 
->>>>>>> deployment
 	}
 
 	//webhookHandler := whhandler.NewWebhookHandler(bot, botKeyboardMarkup, telegramHandler)
@@ -137,7 +135,7 @@ func newBotKeyboardMarkup() *tgbotapi.InlineKeyboardMarkup {
 
 func initConfig() error {
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("./configs/")
+	viper.AddConfigPath("../../configs/")
 	viper.SetConfigName("config")
 	return viper.ReadInConfig()
 }
