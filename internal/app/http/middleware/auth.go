@@ -3,6 +3,7 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/service/auth"
+	"log"
 )
 
 func Auth(s auth.TokenService) gin.HandlerFunc {
@@ -13,6 +14,7 @@ func Auth(s auth.TokenService) gin.HandlerFunc {
 				"error": "request does not contain an access token",
 			})
 			c.Abort()
+			log.Print("request does not contain an access token\n")
 			return
 		}
 
