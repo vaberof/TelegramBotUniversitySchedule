@@ -31,7 +31,7 @@ func (s *ScheduleService) getScheduleImpl(groupId string, from time.Time, to tim
 			return nil, err
 		}
 
-		if err = s.cacheLessons(groupId, getScheduleResponse.Lessons, from, to); err != nil {
+		if err = s.cacheSchedule(groupId, from, to, getScheduleResponse.Lessons); err != nil {
 			return nil, err
 		}
 
@@ -59,13 +59,13 @@ func (s *ScheduleService) callScheduleApi(groupId string, from time.Time, to tim
 	return getScheduleResponse, nil
 }
 
-func (s *ScheduleService) cacheLessons(groupId string, lessons []*infra.Lesson, from time.Time, to time.Time) error {
+func (s *ScheduleService) cacheSchedule(groupId string, from time.Time, to time.Time, lessons []*infra.Lesson) error {
 	storageLessons, err := s.respLessonsToStorageLessons(lessons)
 	if err != nil {
 		return err
 	}
 
-	err = s.scheduleStorage.SaveLessons(groupId, from, to, storageLessons)
+	err = s.scheduleStorage.SaveSchedule(groupId, from, to, storageLessons)
 	if err != nil {
 		return err
 	}

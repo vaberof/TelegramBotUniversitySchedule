@@ -21,7 +21,7 @@ func NewHttpHandler(groupStorage GroupStorage, scheduleStorage ScheduleStorage, 
 
 func (h *HttpHandler) InitRouter() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
-	router := gin.New()
+	router := gin.Default()
 
 	rGroup := router.Group("/group")
 	rGroup.Use(middleware.Auth(h.tokenService))

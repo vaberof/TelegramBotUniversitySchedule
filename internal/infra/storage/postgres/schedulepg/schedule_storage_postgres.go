@@ -43,7 +43,7 @@ func (s *ScheduleStoragePostgres) GetLessons(groupId string, from time.Time, to 
 	return lessonsFromDb, nil
 }
 
-func (s *ScheduleStoragePostgres) SaveLessons(groupId string, from time.Time, to time.Time, lessons []*Lesson) error {
+func (s *ScheduleStoragePostgres) SaveSchedule(groupId string, from time.Time, to time.Time, lessons []*Lesson) error {
 	dateString, err := xtimeconv.FromTimeRangeToDateString(from, to)
 	if err != nil {
 		return err
@@ -51,28 +51,10 @@ func (s *ScheduleStoragePostgres) SaveLessons(groupId string, from time.Time, to
 
 	scheduleFromDb, err := s.getSchedule(groupId, dateString)
 	if err == nil {
-		err = s.updateLessons(scheduleFromDb, lessons)
+		err = s.deleteScheduleImpl(groupId, scheduleFromDb)
 		if err != nil {
 			return err
 		}
-
-		err = s.setExpireTime(scheduleFromDb, from, to)
-		if err != nil {
-			return err
-		}
-
-		err = s.db.Save(scheduleFromDb).Error
-		if err != nil {
-			log.Info("cannot save lessons in db")
-			return err
-		}
-
-		err = s.deleteLessonsWithNullScheduleId()
-		if err != nil {
-			return err
-		}
-		log.Info("deleted lessons with null schedule id from db")
-		return nil
 	}
 
 	err = s.saveLessonsImpl(groupId, dateString, from, to, lessons)
@@ -88,7 +70,11 @@ func (s *ScheduleStoragePostgres) DeleteSchedule(groupId string, date string) er
 		return err
 	}
 
-	err = s.db.Select("Lessons").Where("group_id = ?", groupId).Delete(&schedule).Error
+	return s.deleteScheduleImpl(groupId, schedule)
+}
+
+func (s *ScheduleStoragePostgres) deleteScheduleImpl(groupId string, schedule *Schedule) error {
+	err := s.db.Select("Lessons").Where("group_id = ?", groupId).Delete(&schedule).Error
 	if err != nil {
 		log.Error("cannot delete schedule from db, error: ", err)
 		return err
@@ -137,25 +123,6 @@ func (s *ScheduleStoragePostgres) saveLessonsImpl(groupId string, dateString str
 	}
 
 	log.Info("schedule cached")
-	return nil
-}
-
-func (s *ScheduleStoragePostgres) updateLessons(schedule *Schedule, lessons []*Lesson) error {
-	err := s.db.Model(&schedule).Association("Lessons").Replace(lessons)
-	if err != nil {
-		log.Error("cannot update lessons in db, error: ", err)
-		return err
-	}
-	log.Info("lessons updated")
-	return nil
-}
-
-func (s *ScheduleStoragePostgres) deleteLessonsWithNullScheduleId() error {
-	err := s.db.Table("lessons").Where("schedule_id IS NULL").Delete(&Lesson{}).Error
-	if err != nil {
-		log.Error("cannot delete lessons in db with null schedule id, error: ", err)
-		return err
-	}
 	return nil
 }
 

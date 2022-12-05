@@ -7,5 +7,5 @@ import (
 
 type ScheduleStorage interface {
 	GetLessons(groupId string, from time.Time, to time.Time) ([]*schedulepg.Lesson, error)
-	SaveLessons(groupId string, from time.Time, to time.Time, lessons []*schedulepg.Lesson) error
+	SaveSchedule(groupId string, from time.Time, to time.Time, lessons []*schedulepg.Lesson) error
 }
