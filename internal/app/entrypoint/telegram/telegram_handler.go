@@ -6,7 +6,7 @@ import (
 )
 
 type ScheduleReceiver interface {
-	GetSchedule(groupId string, from time.Time, to time.Time) (*domain.Schedule, error)
+	GetSchedule(groupId string, from time.Time, to time.Time) (domain.Schedule, error)
 }
 
 type MessageStorage interface {

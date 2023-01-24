@@ -3,8 +3,8 @@ package telegram
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	log "github.com/sirupsen/logrus"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/entrypoint/views"
 	domain "github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
-	"github.com/vaberof/TelegramBotUniversitySchedule/internal/pkg/xstrconv"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtime"
 	"time"
 )
@@ -26,7 +26,10 @@ func (h *TelegramHandler) HandleMenuButtonPress(
 		return
 	}
 
-	log.WithFields(log.Fields{"username": update.SentFrom(), "button": inputTelegramButtonDate, "message": *inputTelegramMessage}).
+	log.WithFields(log.Fields{
+		"username": update.SentFrom(),
+		"button":   inputTelegramButtonDate,
+		"message":  *inputTelegramMessage}).
 		Info("User requested a schedule")
 
 	fromDate, toDate, err := h.parseDatesRange(inputTelegramButtonDate, responseCallback, bot)
@@ -73,7 +76,6 @@ func (h *TelegramHandler) parseDatesRange(
 
 	fromDate, toDate, err := xtime.ParseDatesRange(inputTelegramButtonDate)
 	if err != nil {
-
 		log.WithFields(log.Fields{
 			"fromDate": fromDate,
 			"toDate":   toDate,
@@ -93,15 +95,15 @@ func (h *TelegramHandler) getSchedule(
 	from time.Time,
 	to time.Time,
 	responseCallback tgbotapi.MessageConfig,
-	bot *tgbotapi.BotAPI) (*domain.Schedule, error) {
+	bot *tgbotapi.BotAPI) (domain.Schedule, error) {
 
 	schedule, err := h.scheduleReceiver.GetSchedule(groupId, from, to)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"schedule": schedule,
 			"func":     "HandleMenuButtonPress",
-			"error":    err.Error(),
-		}).Error("Cannot get schedule")
+			"error":    err.Error()}).
+			Error("Cannot get schedule")
 
 		responseCallback.Text = err.Error()
 		bot.Send(responseCallback)
@@ -113,17 +115,17 @@ func (h *TelegramHandler) getSchedule(
 func (h *TelegramHandler) scheduleToString(
 	groupId string,
 	inputTelegramButtonDate string,
-	schedule *domain.Schedule,
+	schedule domain.Schedule,
 	responseCallback tgbotapi.MessageConfig,
 	bot *tgbotapi.BotAPI) (*string, error) {
 
-	scheduleString, err := xstrconv.ScheduleToString(groupId, inputTelegramButtonDate, schedule)
+	scheduleString, err := views.ScheduleToString(groupId, inputTelegramButtonDate, schedule)
 	if scheduleString == nil || err != nil {
 		log.WithFields(log.Fields{
 			"schedule string": scheduleString,
 			"error":           err,
-			"func":            "HandleMenuButtonPress",
-		}).Error("Cannot get schedule string")
+			"func":            "HandleMenuButtonPress"}).
+			Error("Cannot get schedule string")
 
 		responseCallback.Text = errorMessageToTelegram
 		bot.Send(responseCallback)

@@ -1,4 +1,4 @@
-package infra
+package unisite
 
 type GetScheduleResponse struct {
 	Lessons []*Lesson

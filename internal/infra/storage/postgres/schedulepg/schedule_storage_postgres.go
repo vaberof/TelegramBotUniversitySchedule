@@ -2,7 +2,8 @@ package schedulepg
 
 import (
 	"errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
+	domain "github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtime"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtimeconv"
 	"github.com/vaberof/TelegramBotUniversitySchedule/pkg/xtimezone"
@@ -18,54 +19,67 @@ func NewScheduleStoragePostgres(db *gorm.DB) *ScheduleStoragePostgres {
 	return &ScheduleStoragePostgres{db: db}
 }
 
-func (s *ScheduleStoragePostgres) GetLessons(groupId string, from time.Time, to time.Time) ([]*Lesson, error) {
+func (s *ScheduleStoragePostgres) GetSchedule(groupId string, from time.Time, to time.Time) (domain.Schedule, error) {
 	dateString, err := xtimeconv.FromTimeRangeToDateString(from, to)
 	if err != nil {
 		return nil, err
 	}
 
-	scheduleFromDb, err := s.getSchedule(groupId, dateString)
+	postgresSchedule, err := s.getScheduleImpl(groupId, dateString)
 	if err != nil {
-		log.Error("cannot get schedule from db, error: ", err)
+		logrus.Error("cannot get schedule from db, error: ", err)
 		return nil, err
 	}
 
-	if err = s.isScheduleOutdated(scheduleFromDb.ExpireTime); err != nil {
+	if err = s.isScheduleOutdated(postgresSchedule.ExpireTime); err != nil {
 		return nil, err
 	}
 
-	lessonsFromDb, err := s.getLessons(scheduleFromDb.Id)
+	lessons, err := s.getLessons(postgresSchedule.Id)
 	if err != nil {
-		log.Error("cannot get lessons from db, error: ", err)
+		logrus.Error("cannot get lessons from db, error: ", err)
 		return nil, err
 	}
-	log.Info("lessons sent from database")
-	return lessonsFromDb, nil
+
+	domainSchedule, err := BuildDomainSchedule(lessons, postgresSchedule.Date)
+	if err != nil {
+		logrus.Error("cannot build domain schedule, error: ", err)
+		return nil, err
+	}
+
+	logrus.Info("schedule sent from database")
+	return domainSchedule, nil
 }
 
-func (s *ScheduleStoragePostgres) SaveSchedule(groupId string, from time.Time, to time.Time, lessons []*Lesson) error {
-	dateString, err := xtimeconv.FromTimeRangeToDateString(from, to)
-	if err != nil {
-		return err
+func (s *ScheduleStoragePostgres) SaveSchedule(groupId string, schedule domain.Schedule) error {
+	var dateString string
+	var daySchedule domain.DaySchedule
+
+	for date, value := range schedule {
+		dateString = string(date)
+		daySchedule = *value
 	}
 
-	scheduleFromDb, err := s.getSchedule(groupId, dateString)
+	postgresSchedule, err := s.getScheduleImpl(groupId, dateString)
 	if err == nil {
-		err = s.deleteScheduleImpl(groupId, scheduleFromDb)
+		err = s.deleteScheduleImpl(groupId, postgresSchedule)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = s.saveLessonsImpl(groupId, dateString, from, to, lessons)
+	postgresLessons := BuildPostgresLessons(daySchedule)
+
+	err = s.saveScheduleImpl(groupId, dateString, postgresLessons)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func (s *ScheduleStoragePostgres) DeleteSchedule(groupId string, date string) error {
-	schedule, err := s.getSchedule(groupId, date)
+	schedule, err := s.getScheduleImpl(groupId, date)
 	if err != nil {
 		return err
 	}
@@ -76,22 +90,25 @@ func (s *ScheduleStoragePostgres) DeleteSchedule(groupId string, date string) er
 func (s *ScheduleStoragePostgres) deleteScheduleImpl(groupId string, schedule *Schedule) error {
 	err := s.db.Select("Lessons").Where("group_id = ?", groupId).Delete(&schedule).Error
 	if err != nil {
-		log.Error("cannot delete schedule from db, error: ", err)
+		logrus.Error("cannot delete schedule from db, error: ", err)
 		return err
 	}
-	log.Info("deleted schedule from db")
+
+	logrus.Info("deleted schedule from db")
+
 	return nil
 }
 
-func (s *ScheduleStoragePostgres) getSchedule(groupId string, dateString string) (*Schedule, error) {
-	var schedule Schedule
+func (s *ScheduleStoragePostgres) getScheduleImpl(groupId string, dateString string) (*Schedule, error) {
+	var postgresSchedule Schedule
 
-	err := s.db.Table("schedules").Where("group_id = ? AND date = ?", groupId, dateString).First(&schedule).Error
+	err := s.db.Table("schedules").Where("group_id = ? AND date = ?", groupId, dateString).First(&postgresSchedule).Error
 	if err != nil {
-		log.Error("schedule not found in db, error: ", err)
+		logrus.Error("schedule not found in db, error: ", err)
 		return nil, errors.New("schedule not found")
 	}
-	return &schedule, nil
+
+	return &postgresSchedule, nil
 }
 
 func (s *ScheduleStoragePostgres) getLessons(scheduleId uint) ([]*Lesson, error) {
@@ -99,20 +116,20 @@ func (s *ScheduleStoragePostgres) getLessons(scheduleId uint) ([]*Lesson, error)
 
 	err := s.db.Table("lessons").Where("schedule_id = ?", scheduleId).Find(&lessons).Error
 	if err != nil {
-		log.Error("lessons not found in db, error: ", err)
+		logrus.Error("lessons not found in db, error: ", err)
 		return nil, errors.New("cant find lessons")
 	}
 	return lessons, nil
 }
 
-func (s *ScheduleStoragePostgres) saveLessonsImpl(groupId string, dateString string, from time.Time, to time.Time, lessons []*Lesson) error {
+func (s *ScheduleStoragePostgres) saveScheduleImpl(groupId string, dateString string, lessons []*Lesson) error {
 	var schedule Schedule
 
 	schedule.GroupId = groupId
 	schedule.Date = dateString
 	schedule.Lessons = lessons
 
-	err := s.setExpireTime(&schedule, from, to)
+	err := s.setExpireTime(&schedule, dateString)
 	if err != nil {
 		return err
 	}
@@ -122,21 +139,18 @@ func (s *ScheduleStoragePostgres) saveLessonsImpl(groupId string, dateString str
 		return err
 	}
 
-	log.Info("schedule cached")
+	logrus.Info("schedule cached")
 	return nil
 }
 
-func (s *ScheduleStoragePostgres) setExpireTime(schedule *Schedule, from time.Time, to time.Time) error {
-	dateString, err := xtimeconv.FromTimeRangeToDateString(from, to)
-	if err != nil {
-		return err
-	}
+func (s *ScheduleStoragePostgres) setExpireTime(schedule *Schedule, date string) error {
+	_, to, err := xtime.ParseDatesRange(date)
 
-	s.setExpireTimeImpl(schedule, dateString, to)
+	s.setExpireTimeImpl(schedule, date, to)
 	if err != nil {
 		return err
 	}
-	log.Info("settled expire time: ", schedule.ExpireTime)
+	logrus.Info("settled expire time: ", schedule.ExpireTime)
 	return nil
 }
 
@@ -169,7 +183,7 @@ func (s *ScheduleStoragePostgres) isScheduleOutdated(scheduleExpireTime time.Tim
 
 	currentTime := time.Now().In(novosibirsk)
 	if currentTime.After(scheduleExpireTime) {
-		log.Info("schedule is outdated: ", scheduleExpireTime)
+		logrus.Info("schedule is outdated: ", scheduleExpireTime)
 		return errors.New("schedule is outdated")
 	}
 	return nil

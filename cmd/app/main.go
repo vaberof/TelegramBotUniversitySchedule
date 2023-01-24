@@ -9,7 +9,7 @@ import (
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/app/entrypoint/telegram"
 	xhttp "github.com/vaberof/TelegramBotUniversitySchedule/internal/app/http/handler"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
-	infra "github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/integration/unisite"
+	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/integration/unisite"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/grouppg"
 	"github.com/vaberof/TelegramBotUniversitySchedule/internal/infra/storage/postgres/messagepg"
@@ -43,10 +43,10 @@ func main() {
 		log.Fatalf("cannot connect to database %s", err.Error())
 	}
 
-	err = db.AutoMigrate(&grouppg.Group{}, &messagepg.Message{}, &schedulepg.Schedule{}, &schedulepg.Lesson{})
-	if err != nil {
-		log.Fatalf("cannot auto migrate models %s", err.Error())
-	}
+	/*	err = db.AutoMigrate(&grouppg.Group{}, &messagepg.Message{}, &schedulepg.Schedule{}, &schedulepg.Lesson{})
+		if err != nil {
+			log.Fatalf("cannot auto migrate models %s", err.Error())
+		}*/
 
 	httpClientConfig := configs.NewHttpClientConfig(
 		viper.GetString("server.host"),
@@ -58,11 +58,12 @@ func main() {
 	messageStoragePostgres := messagepg.NewMessageStoragePostgres(db)
 	scheduleStoragePostgres := schedulepg.NewScheduleStoragePostgres(db)
 
-	getScheduleResponseService := infra.NewGetScheduleResponseService(httpClient, groupStoragePostgres)
+	getScheduleResponseService := unisite.NewGetScheduleResponseService(httpClient, groupStoragePostgres)
 	groupStorageService := group.NewGroupStorageService(groupStoragePostgres)
 	messageStorageService := message.NewMessageStorageService(messageStoragePostgres)
 	scheduleStorageService := schedule.NewScheduleStorageService(scheduleStoragePostgres)
 	authService := auth.NewAuthService(os.Getenv("BEARER_TOKEN"))
+
 	scheduleService := domain.NewScheduleService(getScheduleResponseService, scheduleStoragePostgres)
 
 	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageStorageService)
@@ -88,7 +89,6 @@ func main() {
 		} else if telegramHandler.MenuButtonPressed(update) {
 			telegramHandler.HandleMenuButtonPress(bot, update, *botKeyboardMarkup)
 		}
-
 	}
 
 	//webhookHandler := whhandler.NewWebhookHandler(bot, botKeyboardMarkup, telegramHandler)
@@ -106,9 +106,8 @@ func main() {
 func newBot(config *configs.BotConfig) *tgbotapi.BotAPI {
 	token := config.Token
 	bot, err := tgbotapi.NewBotAPI(token)
-	if err != nil {
+	if err != nil || bot == nil {
 		log.WithFields(log.Fields{
-			"bot":   bot.Self.UserName,
 			"error": err,
 		}).Panic("Failed to create a bot")
 	}

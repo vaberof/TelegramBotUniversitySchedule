@@ -1,10 +1,10 @@
-package infra
+package unisite
 
 import (
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
+	"github.com/sirupsen/logrus"
+	domain "github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
 	"time"
 )
 
@@ -20,52 +20,30 @@ func NewGetScheduleResponseService(scheduleApi ScheduleApi, groupStorage GroupSt
 	}
 }
 
-func (s *GetScheduleResponseService) GetSchedule(groupId string, from time.Time, to time.Time) (*GetScheduleResponse, error) {
+func (s *GetScheduleResponseService) GetSchedule(groupId string, from time.Time, to time.Time) (domain.Schedule, error) {
 	groupExternalId := s.groupStorage.GetGroupExternalId(groupId)
 	if groupExternalId == nil {
-		return nil, errors.New(fmt.Sprintf("Группы '%s' не существует", groupId))
+		return nil, fmt.Errorf("Группа '%s' не найдена", groupId)
 	}
-	log.Printf("group name: %s, query params: %s", groupId, *groupExternalId)
+	logrus.Printf("group name: %s, query params: %s", groupId, *groupExternalId)
 
 	getScheduleResponse, err := s.scheduleApi.GetSchedule(*groupExternalId, from, to)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("schedule response from scheduleApi: %v", getScheduleResponse)
+	logrus.Printf("schedule response from scheduleApi: %v", getScheduleResponse)
 
 	if getScheduleResponse == nil || getScheduleResponse.Lessons == nil {
 		return nil, errors.New("schedule api response is nil")
 	}
 
-	infraGetScheduleResponse := s.getScheduleRespToInfraSchedule(getScheduleResponse)
-	return infraGetScheduleResponse, nil
-}
+	scheduleResponse := BuildGetScheduleResponse(getScheduleResponse)
 
-func (s *GetScheduleResponseService) getScheduleRespToInfraSchedule(getScheduleResponse *integration.GetScheduleResponse) *GetScheduleResponse {
-	var infraGetScheduleResponse GetScheduleResponse
-	infraGetScheduleResponse.Lessons = s.getScheduleRespLessonsToInfraLessons(getScheduleResponse.Lessons)
-	return &infraGetScheduleResponse
-}
-
-func (s *GetScheduleResponseService) getScheduleRespLessonsToInfraLessons(getScheduleRespLessons []*integration.Lesson) []*Lesson {
-	var lessons []*Lesson
-
-	for i := 0; i < len(getScheduleRespLessons); i++ {
-		lesson := s.getScheduleRespLessonToInfraLesson(getScheduleRespLessons[i])
-		lessons = append(lessons, lesson)
+	domainSchedule, err := BuildDomainSchedule(scheduleResponse, from, to)
+	if err != nil {
+		return nil, err
 	}
-	return lessons
-}
 
-func (s *GetScheduleResponseService) getScheduleRespLessonToInfraLesson(getScheduleRespLesson *integration.Lesson) *Lesson {
-	var lesson Lesson
-
-	lesson.Title = getScheduleRespLesson.Title
-	lesson.StartTime = getScheduleRespLesson.StartTime
-	lesson.FinishTime = getScheduleRespLesson.FinishTime
-	lesson.Type = getScheduleRespLesson.Type
-	lesson.RoomId = getScheduleRespLesson.RoomId
-	lesson.TeacherFullName = getScheduleRespLesson.TeacherFullName
-
-	return &lesson
+	fmt.Printf("domain schedule in unisite: %v", domainSchedule)
+	return domainSchedule, nil
 }

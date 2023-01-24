@@ -1,4 +1,4 @@
-package infra
+package unisite
 
 import (
 	integration "github.com/vaberof/TelegramBotUniversitySchedule/pkg/integration/unisite"
