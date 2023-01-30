@@ -135,25 +135,39 @@ func (httpClient *HttpClient) parseDateSelectionWithLessons(
 		lessonType      string // Тип пары (лекция/практика/лабораторная)
 	)
 
-	dateSelection.Find(".one_lesson").EachWithBreak(func(index int, tag *goquery.Selection) bool {
-		title = tag.Find(".names_of_less").Text()
-		if title != "" {
-			startTime = tag.Find(".starting_less").Text()
-			finishTime = tag.Find(".finished_less").Text()
-			roomId = tag.Find(".kabinet_of_less").Text()
-			teacherFullName = tag.Find(".name_of_teacher").Text()
-			lessonType = tag.Find(".type_less").Text()
+	// necessary for storing startTime and FinishTime while parsing <p> tags
+	hours := []string{}
+
+	dateSelection.Find(".day_hours").EachWithBreak(func(index int, tag *goquery.Selection) bool {
+		emptyLessonDivTag := tag.Find(".empty")
+
+		if len(emptyLessonDivTag.Nodes) == 0 {
+			title = tag.Find(".lesson_name ").Text()
+
+			httpClient.parseStartAndFinishTime(tag, &hours)
+
+			// if found start time and finish time
+			if len(hours) == 2 {
+				startTime = hours[0]
+				finishTime = hours[1]
+				hours = []string{}
+			}
+
+			roomId = tag.Find(".aud_num").Text()
+			teacherFullName = tag.Find(".teach_name").Text()
+			lessonType = tag.Find(".lesson_type").Text()
 
 			*lessons = append(*lessons, "have lessons")
 
 			getScheduleResponse.addLesson(
-				title,
+				strings.TrimSpace(title),
 				startTime,
 				finishTime,
 				lessonType,
 				roomId,
 				strings.TrimSpace(teacherFullName))
 		}
+
 		return true
 	})
 }
@@ -211,17 +225,25 @@ func (httpClient *HttpClient) createHtmlDocument(responseBody io.Reader) (*goque
 func (httpClient *HttpClient) parseDate(htmlDocument *goquery.Document, date time.Time) (*goquery.Selection, error) {
 	var dateSelection *goquery.Selection
 
-	htmlDocument.Find("div.one_day-wrap").EachWithBreak(func(index int, tag *goquery.Selection) bool {
-		everDTag := tag.Find("div.everD")
-		everDTagValue := strings.ReplaceAll(everDTag.Text(), " ", "")
+	htmlDocument.Find("div.date_info").EachWithBreak(func(index int, tag *goquery.Selection) bool {
+		dateTag := tag.Find(".date")
+		dateTagValue := strings.ReplaceAll(dateTag.Text(), " ", "")
 
-		if everDTagValue == date.Format("02.01") {
-			dateSelection = tag
+		if dateTagValue == date.Format("02.01.06") {
+			dateSelection = tag.Next()
 			return false
 		}
 		return true
 	})
+
 	return dateSelection, nil
+}
+
+func (httpClient *HttpClient) parseStartAndFinishTime(tag *goquery.Selection, hours *[]string) {
+	hourDivTag := tag.Find(".hour p")
+	hourDivTag.Each(func(index int, tag *goquery.Selection) {
+		*hours = append(*hours, tag.Text())
+	})
 }
 
 func (httpClient *HttpClient) isNilSelection(selection *goquery.Selection) bool {

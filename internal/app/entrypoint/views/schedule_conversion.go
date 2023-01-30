@@ -222,6 +222,8 @@ func getLessonNumber(startTime string) int {
 		return 6
 	case "18:50":
 		return 7
+	case "20:30":
+		return 8
 	default:
 		return 1
 	}
