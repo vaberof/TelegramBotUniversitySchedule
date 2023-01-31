@@ -227,9 +227,8 @@ func (httpClient *HttpClient) parseDate(htmlDocument *goquery.Document, date tim
 
 	htmlDocument.Find("div.date_info").EachWithBreak(func(index int, tag *goquery.Selection) bool {
 		dateTag := tag.Find(".date")
-		dateTagValue := strings.ReplaceAll(dateTag.Text(), " ", "")
 
-		if dateTagValue == date.Format("02.01.06") {
+		if dateTag.Text() == date.Format("02.01.06") {
 			dateSelection = tag.Next()
 			return false
 		}

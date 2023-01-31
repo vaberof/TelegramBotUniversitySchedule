@@ -181,12 +181,22 @@ func addLessonType(lessonType string) string {
 }
 
 func addLessonRoom(lessonRoom string) string {
-	strSchedule := "ауд. " + lessonRoom + ", "
+	if lessonRoom != "" {
+		strSchedule := "ауд. " + lessonRoom + ", "
+		return strSchedule
+	}
+
+	strSchedule := "ауд. " + "не указана" + ", "
 	return strSchedule
 }
 
 func addLessonTeacherFullName(TeacherFullName string) string {
-	strSchedule := "препод. " + TeacherFullName + ")" + "\n\n"
+	if TeacherFullName != "" {
+		strSchedule := "препод. " + TeacherFullName + ")" + "\n\n"
+		return strSchedule
+	}
+
+	strSchedule := "препод. " + "не указан" + ")" + "\n\n"
 	return strSchedule
 }
 
