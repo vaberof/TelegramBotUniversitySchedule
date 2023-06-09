@@ -22,16 +22,18 @@ func (m *MessageStoragePostgres) GetMessage(chatId int64) (*string, error) {
 	return &message.Text, nil
 }
 
-func (m *MessageStoragePostgres) SaveMessage(chatId int64, text string) error {
+func (m *MessageStoragePostgres) SaveMessage(chatId int64, from string, text string) error {
 	messageFromDb, err := m.getMessageFromDb(chatId)
 	if err == nil {
-		return m.updateMessageInDb(messageFromDb, text)
+		return m.updateMessageInDb(messageFromDb, from, text)
 	}
 
 	messageToSave := &Message{
 		ChatId: chatId,
+		From:   Username(from),
 		Text:   text,
 	}
+
 	return m.db.Create(&messageToSave).Error
 }
 
@@ -46,8 +48,9 @@ func (m *MessageStoragePostgres) getMessageFromDb(chatId int64) (*Message, error
 	return &messageStorage, nil
 }
 
-func (m *MessageStoragePostgres) updateMessageInDb(message *Message, text string) error {
+func (m *MessageStoragePostgres) updateMessageInDb(message *Message, from string, text string) error {
 	message.Text = text
+	message.From = Username(from)
 
 	err := m.db.Save(&message).Error
 	if err != nil {

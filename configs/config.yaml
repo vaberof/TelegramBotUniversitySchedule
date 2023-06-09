@@ -1,5 +1,5 @@
 server:
-  host: https://rasp.sgugit.ru/
+  host: https://sgugit.ru/raspisanie/group/
   timeout: 3
 
 db:

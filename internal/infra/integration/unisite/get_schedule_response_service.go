@@ -44,6 +44,5 @@ func (s *GetScheduleResponseService) GetSchedule(groupId string, from time.Time,
 		return nil, err
 	}
 
-	fmt.Printf("domain schedule in unisite: %v", domainSchedule)
 	return domainSchedule, nil
 }

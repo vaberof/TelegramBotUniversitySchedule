@@ -4,8 +4,8 @@ import (
 	domain "github.com/vaberof/TelegramBotUniversitySchedule/internal/domain/schedule"
 )
 
-func BuildDomainSchedule(postgresLessons []*Lesson, date string) (domain.Schedule, error) {
-	daySchedule := buildDomainDaySchedule(postgresLessons)
+func BuildDomainSchedule(postgresSchedule *Schedule, date string) (domain.Schedule, error) {
+	daySchedule := buildDomainDaySchedule(postgresSchedule.Lessons)
 
 	schedule := make(domain.Schedule)
 	schedule[domain.Date(date)] = daySchedule

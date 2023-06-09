@@ -25,7 +25,7 @@ func (s *ScheduleStoragePostgres) GetSchedule(groupId string, from time.Time, to
 		return nil, err
 	}
 
-	postgresSchedule, err := s.getScheduleImpl(groupId, dateString)
+	postgresSchedule, err := s.getSchedule(groupId, dateString)
 	if err != nil {
 		logrus.Error("cannot get schedule from db, error: ", err)
 		return nil, err
@@ -35,13 +35,7 @@ func (s *ScheduleStoragePostgres) GetSchedule(groupId string, from time.Time, to
 		return nil, err
 	}
 
-	lessons, err := s.getLessons(postgresSchedule.Id)
-	if err != nil {
-		logrus.Error("cannot get lessons from db, error: ", err)
-		return nil, err
-	}
-
-	domainSchedule, err := BuildDomainSchedule(lessons, postgresSchedule.Date)
+	domainSchedule, err := BuildDomainSchedule(postgresSchedule, postgresSchedule.Date)
 	if err != nil {
 		logrus.Error("cannot build domain schedule, error: ", err)
 		return nil, err
@@ -60,9 +54,9 @@ func (s *ScheduleStoragePostgres) SaveSchedule(groupId string, schedule domain.S
 		daySchedule = *value
 	}
 
-	postgresSchedule, err := s.getScheduleImpl(groupId, dateString)
+	postgresSchedule, err := s.getSchedule(groupId, dateString)
 	if err == nil {
-		err = s.deleteScheduleImpl(groupId, postgresSchedule)
+		err = s.deleteSchedule(groupId, postgresSchedule)
 		if err != nil {
 			return err
 		}
@@ -74,52 +68,39 @@ func (s *ScheduleStoragePostgres) SaveSchedule(groupId string, schedule domain.S
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
 func (s *ScheduleStoragePostgres) DeleteSchedule(groupId string, date string) error {
-	schedule, err := s.getScheduleImpl(groupId, date)
+	schedule, err := s.getSchedule(groupId, date)
 	if err != nil {
 		return err
 	}
-
-	return s.deleteScheduleImpl(groupId, schedule)
+	return s.deleteSchedule(groupId, schedule)
 }
 
-func (s *ScheduleStoragePostgres) deleteScheduleImpl(groupId string, schedule *Schedule) error {
+func (s *ScheduleStoragePostgres) deleteSchedule(groupId string, schedule *Schedule) error {
 	err := s.db.Select("Lessons").Where("group_id = ?", groupId).Delete(&schedule).Error
 	if err != nil {
 		logrus.Error("cannot delete schedule from db, error: ", err)
 		return err
 	}
-
 	logrus.Info("deleted schedule from db")
-
 	return nil
 }
 
-func (s *ScheduleStoragePostgres) getScheduleImpl(groupId string, dateString string) (*Schedule, error) {
+func (s *ScheduleStoragePostgres) getSchedule(groupId string, dateString string) (*Schedule, error) {
 	var postgresSchedule Schedule
 
-	err := s.db.Table("schedules").Where("group_id = ? AND date = ?", groupId, dateString).First(&postgresSchedule).Error
+	err := s.db.Table("schedules").
+		Preload("Lessons").
+		Where("group_id = ? AND date = ?", groupId, dateString).
+		First(&postgresSchedule).Error
 	if err != nil {
 		logrus.Error("schedule not found in db, error: ", err)
 		return nil, errors.New("schedule not found")
 	}
-
 	return &postgresSchedule, nil
-}
-
-func (s *ScheduleStoragePostgres) getLessons(scheduleId uint) ([]*Lesson, error) {
-	var lessons []*Lesson
-
-	err := s.db.Table("lessons").Where("schedule_id = ?", scheduleId).Find(&lessons).Error
-	if err != nil {
-		logrus.Error("lessons not found in db, error: ", err)
-		return nil, errors.New("cant find lessons")
-	}
-	return lessons, nil
 }
 
 func (s *ScheduleStoragePostgres) saveScheduleImpl(groupId string, dateString string, lessons []*Lesson) error {
@@ -155,22 +136,21 @@ func (s *ScheduleStoragePostgres) setExpireTime(schedule *Schedule, date string)
 }
 
 func (s *ScheduleStoragePostgres) setExpireTimeImpl(schedule *Schedule, dateString string, requestedDate time.Time) {
-	yyyy, mm, dd := requestedDate.Date()
-
+	year, month, day := requestedDate.Date()
 	switch dateString {
 	case "Today":
-		tomorrowExpireDate := time.Date(yyyy, mm, dd+1, 0, 0, 0, 0, requestedDate.Location())
+		tomorrowExpireDate := time.Date(year, month, day+1, 0, 0, 0, 0, requestedDate.Location())
 		schedule.ExpireTime = tomorrowExpireDate
 	case "Tomorrow":
-		tomorrowExpireDate := time.Date(yyyy, mm, dd, 0, 0, 0, 0, requestedDate.Location())
+		tomorrowExpireDate := time.Date(year, month, day, 0, 0, 0, 0, requestedDate.Location())
 		schedule.ExpireTime = tomorrowExpireDate
 	case "Week":
 		// requestedDate is equals to sunday of the current week
-		nextMondayExpireDate := time.Date(yyyy, mm, dd+1, 0, 0, 0, 0, requestedDate.Location())
+		nextMondayExpireDate := time.Date(year, month, day+1, 0, 0, 0, 0, requestedDate.Location())
 		schedule.ExpireTime = nextMondayExpireDate
 	default:
 		// requestedDate is equals to sunday of the next week
-		nextMondayExpireDate := time.Date(yyyy, mm, dd-6, 0, 0, 0, 0, requestedDate.Location())
+		nextMondayExpireDate := time.Date(year, month, day-6, 0, 0, 0, 0, requestedDate.Location())
 		schedule.ExpireTime = nextMondayExpireDate
 	}
 }

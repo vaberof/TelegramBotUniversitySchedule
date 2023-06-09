@@ -34,7 +34,6 @@ func (s *ScheduleService) getScheduleImpl(groupId string, from time.Time, to tim
 
 		return schedule, nil
 	}
-
 	return cachedSchedule, nil
 }
 
@@ -43,7 +42,6 @@ func (s *ScheduleService) callScheduleApi(groupId string, from time.Time, to tim
 	if err != nil {
 		return nil, err
 	}
-
 	return schedule, nil
 }
 
@@ -52,6 +50,5 @@ func (s *ScheduleService) cacheSchedule(groupId string, schedule Schedule) error
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
