@@ -43,10 +43,10 @@ func main() {
 		log.Fatalf("cannot connect to database %s", err.Error())
 	}
 
-	/*	err = db.AutoMigrate(&grouppg.Group{}, &messagepg.Message{}, &schedulepg.Schedule{}, &schedulepg.Lesson{})
-		if err != nil {
-			log.Fatalf("cannot auto migrate models %s", err.Error())
-		}*/
+	/*err = db.AutoMigrate(&grouppg.Group{}, &messagepg.Message{}, &schedulepg.Schedule{}, &schedulepg.Lesson{})
+	if err != nil {
+		log.Fatalf("cannot auto migrate models %s", err.Error())
+	}*/
 
 	httpClientConfig := configs.NewHttpClientConfig(
 		viper.GetString("server.host"),
@@ -59,15 +59,15 @@ func main() {
 	scheduleStoragePostgres := schedulepg.NewScheduleStoragePostgres(db)
 
 	getScheduleResponseService := unisite.NewGetScheduleResponseService(httpClient, groupStoragePostgres)
-	groupStorageService := group.NewGroupStorageService(groupStoragePostgres)
-	messageStorageService := message.NewMessageStorageService(messageStoragePostgres)
-	scheduleStorageService := schedule.NewScheduleStorageService(scheduleStoragePostgres)
+	groupStorageService := group.NewGroupService(groupStoragePostgres)
+	messageService := message.NewMessageService(messageStoragePostgres)
+	scheduleService := schedule.NewScheduleService(scheduleStoragePostgres)
 	authService := auth.NewAuthService(os.Getenv("BEARER_TOKEN"))
 
-	scheduleService := domain.NewScheduleService(getScheduleResponseService, scheduleStoragePostgres)
+	domainScheduleService := domain.NewScheduleService(getScheduleResponseService, scheduleStoragePostgres)
 
-	telegramHandler := telegram.NewTelegramHandler(scheduleService, messageStorageService)
-	httpHandler := xhttp.NewHttpHandler(groupStorageService, scheduleStorageService, authService)
+	telegramHandler := telegram.NewTelegramHandler(domainScheduleService, messageService)
+	httpHandler := xhttp.NewHttpHandler(groupStorageService, scheduleService, authService)
 
 	router := httpHandler.InitRouter()
 	botConfig := configs.NewBotConfig(os.Getenv("TOKEN"))

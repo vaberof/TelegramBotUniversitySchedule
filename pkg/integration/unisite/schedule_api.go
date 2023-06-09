@@ -238,8 +238,8 @@ func (httpClient *HttpClient) parseDate(htmlDocument *goquery.Document, date tim
 	return dateSelection, nil
 }
 
-func (httpClient *HttpClient) parseStartAndFinishTime(tag *goquery.Selection, hours *[]string) {
-	hourDivTag := tag.Find(".hour p")
+func (httpClient *HttpClient) parseStartAndFinishTime(selection *goquery.Selection, hours *[]string) {
+	hourDivTag := selection.Find(".hour p")
 	hourDivTag.Each(func(index int, tag *goquery.Selection) {
 		*hours = append(*hours, tag.Text())
 	})

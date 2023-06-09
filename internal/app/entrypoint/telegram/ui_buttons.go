@@ -60,7 +60,7 @@ func (h *TelegramHandler) MenuButtonPressed(callBackQuery tgbotapi.Update) bool 
 }
 
 func (h *TelegramHandler) getMessage(chatId int64, responseCallback tgbotapi.MessageConfig, bot *tgbotapi.BotAPI) *string {
-	inputTelegramMessage, err := h.messageStorage.GetMessage(chatId)
+	inputTelegramMessage, err := h.messageService.GetMessage(chatId)
 	if inputTelegramMessage == nil || err != nil {
 		responseCallback.Text = "Введите номер группы"
 		bot.Send(responseCallback)
